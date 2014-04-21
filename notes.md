@@ -71,3 +71,7 @@ set remote origin: railsagainstignorance/neighbours
 ```
 
 - git push origin master
+
+- touch neighbours.rb
+   + ruby test.rb --> 0 errors. Yay!
+
