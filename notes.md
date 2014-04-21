@@ -41,3 +41,33 @@ gem "rack-test", :group => :test
          + ruby dk.rb review, and then install
 - bundle install # take two
    + yay!
+- ruby test.rb
+
+```
+test.rb:4:in `require_relative': cannot load such file -- c:/Users/lenovo/dev/neighbours/neighbours.rb (LoadError)
+```
+
+- create repo on github
+   + gem install hub
+   + hub create neighbours
+      + got 
+
+```
+...
+Permission denied (publickey).
+fatal: The remote end hung up unexpectedly
+error: Could not fetch origin
+```
+
+   + via https://help.github.com/articles/error-permission-denied-publickey
+      + added ~/.ssh/id_rsa.pub to github
+   + reran hub create, got
+
+```
+railsagainstignorance/neighbours already exists on github.com
+origin  git@github.com:railsagainstignorance/neighbours.git (fetch)
+origin  git@github.com:railsagainstignorance/neighbours.git (push)
+set remote origin: railsagainstignorance/neighbours
+```
+
+- git push origin master
