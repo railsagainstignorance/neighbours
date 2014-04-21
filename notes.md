@@ -75,3 +75,24 @@ set remote origin: railsagainstignorance/neighbours
 - touch neighbours.rb
    + ruby test.rb --> 0 errors. Yay!
 
+- added test for default route "hello world" in JSON and UTF8
+- added route
+- added test for 200 response
+- added failed route
+
+- adding local DB
+   + via http://blog.dudeblake.com/2010/05/setting-up-sinatra-and-datamapper-on.html
+
+```
+gem "sqlite3"
+gem "dm-core"
+gem "dm-sqlite-adapter" #<-- NB, this is crucial
+gem "do_sqlite3"
+```
+
+### Questions / ToDos
+- tests involving setting and tearing down the db?
+- create a DB entry
+   + http://recipes.sinatrarb.com/p/models/data_mapper
+- check for unique values: http://datamapper.org/docs/validations.html
+- create additonal neighbours, relative/close to long/lat
