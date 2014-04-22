@@ -63,3 +63,25 @@ end
 get '/neighbours_destroy' do
 	Neighbour.destroy
 end
+
+get '/add_random_neighbours' do
+	content_type :json, 'charset' => 'utf-8'
+
+	num = params[:num] || 3
+	puts "add_random_neighbours: num=#{num}"
+
+	before_count = Neighbour.count
+	before_count.to_json
+	num.to_i.times do |i|
+		now = Time.now
+		nhbr = Neighbour.first_or_create(
+			:name       => "neighbour #{now.to_f}",
+			:latitude   => rand(-90.000000000...90.000000000),
+			:longitude  => rand(-180.000000000...180.000000000),
+			:created_at => now,
+			:updated_at => now
+			)
+	end
+	after_count = Neighbour.count
+	(after_count - before_count).to_json
+end
