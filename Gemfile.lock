@@ -51,8 +51,6 @@ GEM
       uuidtools (~> 2.1)
     dm-validations (1.2.0)
       dm-core (~> 1.2.0)
-    do_sqlite3 (0.10.14)
-      data_objects (= 0.10.14)
     do_sqlite3 (0.10.14-x86-mingw32)
       data_objects (= 0.10.14)
     fastercsv (1.5.5)
@@ -78,7 +76,6 @@ PLATFORMS
 
 DEPENDENCIES
   data_mapper
-  dm-core
   dm-sqlite-adapter
   do_sqlite3
   json
