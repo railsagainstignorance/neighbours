@@ -27,4 +27,9 @@ describe "Neighbours" do
 		last_response.content_type.must_equal 'application/json;charset=utf-8'
 
 	end
+
+	it "should return the favicon.ico" do
+		get '/favicon.ico'
+		assert last_response.ok?, "response code not ok"
+	end
 end
