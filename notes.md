@@ -132,3 +132,11 @@ gem "do_sqlite3"
    + so far just handling correct number
    + next to add within radius of
       + adding gem geocoder (https://github.com/alexreisner/geocoder)
+      + need to require 'geocoder' in order to have access to Geocoder::Calculations.distance_between
+   + new route: /add_random_neighbours
+   + testing it for neighbours within radius
+
+ToDo
+- create neighbours within radius
+   + maybe have to switch from DataMapper to ActiveRecord to support use of geocoder
+   + also, appears to be some downsides to using sqlite: https://github.com/alexreisner/geocoder, "Distance Queries in SQLite"
