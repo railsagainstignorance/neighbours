@@ -2,7 +2,17 @@ require 'sinatra'
 require 'json'
 require 'data_mapper'
 
-DataMapper.setup( :default, "sqlite3://#{Dir.pwd}/neighbours.db" )
+configure :test do
+	DataMapper.setup( :default, "sqlite3::memory:" )
+end
+
+configure :development do
+	DataMapper.setup( :default, "sqlite3://#{Dir.pwd}/neighbours.db" )
+end
+
+# configure :production do
+#	 DataMapper.setup( :default, ENV['DATABASE_URL'] )
+# end
 
 class Neighbour
 	include DataMapper::Resource
