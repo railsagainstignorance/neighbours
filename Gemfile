@@ -4,6 +4,7 @@ gem "sinatra"
 gem "json"
 
 gem "data_mapper"
+gem "geocoder"
 
 group :test do
 	gem "rack-test"

@@ -21,6 +21,8 @@ def app
 end
 ```
 
+   + minitest: http://mattsears.com/articles/2011/12/10/minitest-quick-reference
+
 - ruby test.rb
    + "cannot load such file", i.e. we've not included the test gems yet
 - create Gemfile
@@ -96,3 +98,37 @@ gem "do_sqlite3"
    + http://recipes.sinatrarb.com/p/models/data_mapper
 - check for unique values: http://datamapper.org/docs/validations.html
 - create additonal neighbours, relative/close to long/lat
+
+## 22/04/2014 19:30
+
+- adding favico.ico (built via http://www.favicon.cc/)
+   + created test
+   + created favicon
+   + mkdir public; cd favico.ico public
+   + yay!
+
+- removed dm-core from Gemfile (covered by data_mapper gem)
+
+- refactored Gemfile into dev/test/prod, ditto configure in neighbours.rb
+   + now need to specify test db for tests
+   + possibly use  
+      + DataMapper::Logger.new($stdout, :debug)
+      + DataMapper.setup(:default, 'sqlite::memory:')
+   + via http://www.millwoodonline.co.uk/blog/mini-minitest-tutorial
+   + Q: still not clear how to setup a test db
+   + Q: what is the difference between a spec and a test?
+   + created "configure :test"  entry in neightbours.rb
+   + created spec folder, spec_helper, neighbours_spec
+   + created Rakefile
+   + test doing: rake test
+
+- adding db validations
+   + require dm-validations
+      +  property :name,     String, :required => true, :unique => true
+
+- added sinatra/reloader, via dev gem sinatra-contrib
+
+- refactoring tests and code to support add_random_neighours
+   + so far just handling correct number
+   + next to add within radius of
+      + adding gem geocoder (https://github.com/alexreisner/geocoder)

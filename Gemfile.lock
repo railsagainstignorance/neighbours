@@ -57,6 +57,7 @@ GEM
     do_sqlite3 (0.10.14-x86-mingw32)
       data_objects (= 0.10.14)
     fastercsv (1.5.5)
+    geocoder (1.2.0)
     json (1.8.1)
     json_pure (1.8.1)
     multi_json (1.9.2)
@@ -88,6 +89,7 @@ DEPENDENCIES
   data_mapper
   dm-sqlite-adapter
   do_sqlite3
+  geocoder
   json
   rack-test
   sinatra

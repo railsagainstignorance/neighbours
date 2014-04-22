@@ -5,6 +5,8 @@ require 'json'
 require 'data_mapper'
 require 'dm-validations'
 
+require 'geocoder'
+
 configure :test do
 	DataMapper.setup( :default, "sqlite3::memory:" )
 end
@@ -16,6 +18,8 @@ end
 # configure :production do
 #	 DataMapper.setup( :default, ENV['DATABASE_URL'] )
 # end
+
+Geocoder.configure( :units => :km )
 
 class Neighbour
 	include DataMapper::Resource
@@ -42,6 +46,7 @@ get '/' do
 end
 
 get '/neighbours' do
+	content_type :json, 'charset' => 'utf-8'
 	@nhbrs = Neighbour.all()
 	@nhbrs.to_json
 end
@@ -67,8 +72,10 @@ end
 get '/add_random_neighbours' do
 	content_type :json, 'charset' => 'utf-8'
 
-	num = params[:num] || 3
-	puts "add_random_neighbours: num=#{num}"
+	num       = params[:num]       || 3
+	latitude  = params[:latitude]  || 0.0
+	longitude = params[:longitude] || 0.0
+	radius    = params[:radius]    || 100 # metres
 
 	before_count = Neighbour.count
 	before_count.to_json
