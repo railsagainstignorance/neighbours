@@ -1,6 +1,9 @@
 require 'sinatra'
+require "sinatra/reloader" if development?
+
 require 'json'
 require 'data_mapper'
+require 'dm-validations'
 
 configure :test do
 	DataMapper.setup( :default, "sqlite3::memory:" )
@@ -18,7 +21,7 @@ class Neighbour
 	include DataMapper::Resource
 
 	property :id, 		  Serial
-	property :name, 	  String, :required => true
+	property :name, 	  String, :required => true, :unique => true
 	property :latitude,   Float, :required => true
 	property :longitude,  Float, :required => true
 	property :created_at, DateTime, :required => true
@@ -55,4 +58,8 @@ get '/add_5_random_neighbours' do
 			:updated_at => now
 			)
 	end
+end
+
+get '/neighbours_destroy' do
+	Neighbour.destroy
 end

@@ -9,6 +9,10 @@ group :test do
 	gem "rack-test"
 end
 
+group :development do
+	gem "sinatra-contrib"
+end
+
 group :development, :test do
 	gem "dm-sqlite-adapter"
 	gem "sqlite3"
