@@ -34,9 +34,9 @@ describe "Neighbours" do
 	end
 
 	it "should add 3 random neighbours" do
-		longitude = 0
-		latitude  = 0
-		radius    = 1 # km
+		longitude = 0.0
+		latitude  = 0.0
+		radius    = 1.0 # mile
 		num       = 3
 
 		get '/add_random_neighbours', 

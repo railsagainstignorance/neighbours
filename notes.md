@@ -140,3 +140,11 @@ ToDo
 - create neighbours within radius
    + maybe have to switch from DataMapper to ActiveRecord to support use of geocoder
    + also, appears to be some downsides to using sqlite: https://github.com/alexreisner/geocoder, "Distance Queries in SQLite"
+
+## 23/04/2014 22:35
+
+- reset Geocoder.configure( ) to default (i.e. :unit = :mi)
+
+- to create nearby random neighbours, can maybe use random_point_near (via http://www.omniref.com/ruby/gems/geocoder/1.1.9/classes/Geocoder::Calculations)
+   + yay, after converting the params values to ints and floats
+

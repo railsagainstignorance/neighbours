@@ -6,6 +6,7 @@ require 'data_mapper'
 require 'dm-validations'
 
 require 'geocoder'
+require 'pp'
 
 configure :test do
 	DataMapper.setup( :default, "sqlite3::memory:" )
@@ -19,7 +20,7 @@ end
 #	 DataMapper.setup( :default, ENV['DATABASE_URL'] )
 # end
 
-Geocoder.configure( :units => :km )
+Geocoder.configure( ) # default=:mi, but might want to specify :units => :km 
 
 class Neighbour
 	include DataMapper::Resource
@@ -72,19 +73,30 @@ end
 get '/add_random_neighbours' do
 	content_type :json, 'charset' => 'utf-8'
 
-	num       = params[:num]       || 3
-	latitude  = params[:latitude]  || 0.0
-	longitude = params[:longitude] || 0.0
-	radius    = params[:radius]    || 100 # metres
+	params[:num]       ||= 3
+	params[:latitude]  ||= 0.0
+	params[:longitude] ||= 0.0
+	params[:radius]    ||= 1 # miles
+
+	# params values will be strings, so need to convert them
+
+	num       = params[:num].to_i
+	latitude  = params[:latitude].to_f 
+	longitude = params[:longitude].to_f
+	radius    = params[:radius].to_f 
+
+	#puts "DEBUG: add_random_neighbours: latitude=#{latitude}, longitude=#{longitude}, radius=#{radius}"
 
 	before_count = Neighbour.count
 	before_count.to_json
-	num.to_i.times do |i|
+	num.times do |i|
 		now = Time.now
+		random_coords = Geocoder::Calculations.random_point_near([latitude, longitude], radius)
+		#puts "DEBUG: add_random_neighbours: i=#{i}, random_coords=#{pp random_coords}"
 		nhbr = Neighbour.first_or_create(
 			:name       => "neighbour #{now.to_f}",
-			:latitude   => rand(-90.000000000...90.000000000),
-			:longitude  => rand(-180.000000000...180.000000000),
+			:latitude   => random_coords.first,
+			:longitude  => random_coords.last,
 			:created_at => now,
 			:updated_at => now
 			)
