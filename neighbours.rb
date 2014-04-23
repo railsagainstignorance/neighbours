@@ -48,22 +48,27 @@ end
 
 get '/neighbours' do
 	content_type :json, 'charset' => 'utf-8'
-	@nhbrs = Neighbour.all()
-	@nhbrs.to_json
-end
+	if params.include?('latitude') and params.include?('longitude') and params.include?('radius')
+		latitude  = params['latitude'].to_f
+		longitude = params['longitude'].to_f
+		radius    = params['radius'].to_f
 
-get '/add_5_random_neighbours' do
-	content_type :json, 'charset' => 'utf-8'
-	(1..5).each do |i|
-		now = Time.now
-		nhbr = Neighbour.first_or_create(
-			:name       => "neighbour #{i}",
-			:latitude   => rand(-90.000000000...90.000000000),
-			:longitude  => rand(-180.000000000...180.000000000),
-			:created_at => now,
-			:updated_at => now
+		nhbrs = Neighbour.all(
+			:latitude.gt  => latitude  - radius,
+			:latitude.lt  => latitude  + radius,
+			:longitude.gt => longitude - radius,
+			:longitude.lt => longitude + radius
 			)
+
+		# and another pass thru the list of neighbours to ensure we are actually within the radius (and not in the corners of the bounding square)
+		nhbrs.keep_if { |n|
+			distance_in_miles = Geocoder::Calculations.distance_between( [n['latitude'], n['longitude']], [latitude, longitude] )
+			distance_in_miles <= radius
+		}
+	else
+		nhbrs = Neighbour.all()
 	end
+	nhbrs.to_json
 end
 
 get '/neighbours_destroy' do
@@ -92,7 +97,7 @@ get '/add_random_neighbours' do
 	num.times do |i|
 		now = Time.now
 		random_coords = Geocoder::Calculations.random_point_near([latitude, longitude], radius)
-		#puts "DEBUG: add_random_neighbours: i=#{i}, random_coords=#{pp random_coords}"
+		#puts "DEBUG: add_random_neighbours: i=#{i}, random_coords=#{random_coords.to_s}"
 		nhbr = Neighbour.first_or_create(
 			:name       => "neighbour #{now.to_f}",
 			:latitude   => random_coords.first,

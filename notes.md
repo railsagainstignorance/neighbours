@@ -147,4 +147,9 @@ ToDo
 
 - to create nearby random neighbours, can maybe use random_point_near (via http://www.omniref.com/ruby/gems/geocoder/1.1.9/classes/Geocoder::Calculations)
    + yay, after converting the params values to ints and floats
+- refactored neighbours_spec
+- add_random_neighbours now adds within radius (and is tested for)
 
+ToDo
+
+- add full JSON responses to every API call, even if only status+count
