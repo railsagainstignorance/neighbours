@@ -25,17 +25,21 @@ Geocoder.configure( ) # default=:mi, but might want to specify :units => :km
 class Neighbour
 	include DataMapper::Resource
 
-	property :id, 		  Serial
-	property :name, 	  String, :required => true, :unique => true
-	property :latitude,   Float, :required => true
-	property :longitude,  Float, :required => true
-	property :created_at, DateTime, :required => true
-	property :updated_at, DateTime, :required => true
+	property :id, 		        Serial
+	property :name, 	        String,   :required => true, :unique => true
+	property :latitude,         Float,    :required => true
+	property :longitude,        Float,    :required => true
+	property :created_at,       DateTime, :required => true
+	property :updated_at,       DateTime, :required => true
 end
 
 DataMapper.finalize
 
 Neighbour.auto_upgrade!
+
+helpers do
+	
+end
 
 #get '/' do
 #	halt(404)
@@ -108,4 +112,16 @@ get '/add_random_neighbours' do
 	end
 	after_count = Neighbour.count
 	(after_count - before_count).to_json
+end
+
+put '/register' do
+	content_type :json, 'charset' => 'utf-8'
+
+	
+	response = { 
+		'status' => 'success',
+		'data' => {'atoken' => '1234567890'} 
+	}
+	
+	response.to_json
 end

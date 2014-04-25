@@ -153,3 +153,28 @@ ToDo
 ToDo
 
 - add full JSON responses to every API call, even if only status+count
+
+## 25/04/2014 22:19
+
+ToDo
+- add full JSON responses to every API call
+   + request valid=true/false
+   + user action needed = true/false, action=re-authenticate
+- require name/id for /neighbours call, so that location of name is updated
+- add register route (server responds with token)
+   + /neighbours call then requires token
+   + require password, email, name, location
+   + authentication? https://github.com/hassox/warden/wiki
+      + https://github.com/nmattisson/sinatra-warden-api
+- verify/escape all input
+- add validity checks on requests, e.g. location cannot change too drastically
+- /neighbours call only returns location/name/timestamps
+- explore https
+- capture/record environment (e.g. wifi, etc)
+- CORS ?
+- consider https://github.com/12-oz/pliny, "Opinionated template Sinatra app for writing excellent APIs in Ruby"
+
+doing
+- adding helpers section
+   + notes on helpers: http://stackoverflow.com/questions/6916626/sinatra-helper-in-external-file
+   

@@ -85,4 +85,23 @@ describe "Neighbours" do
 		0.must_equal neighbours.count, "should be no such neighbours, but found #{neighbours.count}"
 	end
 
+	it "should register a new user" do
+		put '/register',
+			:name          => 'Chris',
+			:email_address => 'cgathercole@gmail.com',
+			:password      => 'aBc',
+			:latitude      => 0.0,
+			:longitude     => 0.0
+
+		assert_last_response_ok_json_utf8(last_response)
+		parsed_body = JSON.parse( last_response.body )
+		parsed_body.must_be_kind_of(Hash)
+		parsed_body.must_include('status')
+		parsed_body['status'].must_equal 'success'
+		parsed_body.must_include('data')
+		parsed_body['data'].must_be_kind_of(Hash)
+		parsed_body['data'].must_include('atoken')
+		parsed_body['data']['atoken'].must_be_kind_of(String)
+	end
+
 end
