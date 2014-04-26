@@ -60,27 +60,57 @@ end
 
 get '/neighbours' do
 	content_type :json, 'charset' => 'utf-8'
-	if params.include?('latitude') and params.include?('longitude') and params.include?('radius')
-		latitude  = params['latitude'].to_f
-		longitude = params['longitude'].to_f
-		radius    = params['radius'].to_f
 
-		nhbrs = Neighbour.all(
-			:latitude.gte  => latitude  - radius,
-			:latitude.lte  => latitude  + radius,
-			:longitude.gte => longitude - radius,
-			:longitude.lte => longitude + radius
-			)
-
-		# and another pass thru the list of neighbours to ensure we are actually within the radius (and not in the corners of the bounding square)
-		nhbrs.keep_if { |n|
-			distance_in_miles = Geocoder::Calculations.distance_between( [n['latitude'], n['longitude']], [latitude, longitude] )
-			distance_in_miles <= radius
+	if !params.include?('atoken')
+		response = { 
+			'status' => 'fail',
+			'data' => {'message' => 'no atoken'} 
+		}
+	elsif Neighbour.count(:atoken => atoken) == 0
+		response = { 
+			'status' => 'success',
+			'data' => {'neighbours' => []} 
 		}
 	else
-		nhbrs = Neighbour.all()
+		# get the nhbrs
+		if params.include?('latitude') and params.include?('longitude') and params.include?('radius')
+			latitude  = params['latitude'].to_f
+			longitude = params['longitude'].to_f
+			radius    = params['radius'].to_f
+	
+			nhbrs = Neighbour.all(
+				:latitude.gte  => latitude  - radius,
+				:latitude.lte  => latitude  + radius,
+				:longitude.gte => longitude - radius,
+				:longitude.lte => longitude + radius
+				)
+	
+			# and another pass thru the list of neighbours to ensure we are actually within the radius (and not in the corners of the bounding square)
+			nhbrs.keep_if { |n|
+				distance_in_miles = Geocoder::Calculations.distance_between( [n['latitude'], n['longitude']], [latitude, longitude] )
+				distance_in_miles <= radius
+			}
+		else
+			nhbrs = Neighbour.all()
+		end
+
+		# extract only the subset of data from each nhbr for return
+		nhbrs_basics = nhbrs.map { |n| 
+			{
+				:name       => n.name,
+				:latitude   => n.latitude,
+				:longitude  => n.longitude,
+				:updated_at => n.updated_at
+			}
+		 }
+
+		response = { 
+			'status' => 'success',
+			'data' => {'neighbours' => nhbrs_basics} 
+		}
 	end
-	nhbrs.to_json
+	
+	return response.to_json
 end
 
 get '/neighbours_destroy' do

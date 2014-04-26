@@ -177,4 +177,17 @@ ToDo
 doing
 - adding helpers section
    + notes on helpers: http://stackoverflow.com/questions/6916626/sinatra-helper-in-external-file
-   
+- adding test for /register
+   + defining json format, http://labs.omniti.com/labs/jsend
+- minitest details: http://www.rubyinside.com/a-minitestspec-tutorial-elegant-spec-style-testing-that-comes-with-ruby-5354.html
+- adding token
+   + http://stackoverflow.com/questions/18228324/i-need-to-generate-uuid-for-my-rails-application-what-are-the-optionsgems-i-h
+   + http://stackoverflow.com/questions/6021372/best-way-to-create-unique-token-in-rails
+- checking for token in /neighbours (expecting tests to fail)
+   + /neighbour now returns status structure and requires token ... breaks tests
+
+ToDo
+- fix tests to work with new /neighbours
+   + check requires token
+   + pass in token
+   + check returns correct response
