@@ -213,3 +213,9 @@ ToDo
 
 - documentation? https://github.com/jillesvangurp/sinatra-docdsl
    + annoying buglet where the error entry in the footer seems to need the extra {...}
+
+- Q: versioning? (see Pliny? https://github.com/12-oz/pliny)
+
+- add basic pages
+   + views/layout.erb
+   + 

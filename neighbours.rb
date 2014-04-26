@@ -190,6 +190,22 @@ helpers do
 
 		return response
 	end
+
+	# If @title is assigned, add it to the page's title.
+	def title
+		brand = 'Neighbours'
+		if @title
+			"#{@title} -- #{brand}"
+		else
+			brand
+		end
+	end
+
+	# Format the Ruby Time object returned from a post's created_at method
+	# into a string that looks like this: 06 Jan 2012
+	def pretty_date(time)
+		time.strftime("%d %b %Y")
+	end
 end
 
 documentation 'Hello? Is this thing on?' do
@@ -369,4 +385,11 @@ put '/re-register' do
 end
 
 # this tells docdsl to render the documentation when you do a GET on /doc
-doc_endpoint "/doc"  
+doc_endpoint "/doc" 
+
+# web-facing routes
+
+get '/web/register' do
+	@title = 'register'
+	erb :register
+end
