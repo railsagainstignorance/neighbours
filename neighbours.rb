@@ -191,6 +191,8 @@ helpers do
 		return response
 	end
 
+	# display-related helpers
+
 	# If @title is assigned, add it to the page's title.
 	def title
 		brand = 'Neighbours'
