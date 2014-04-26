@@ -79,6 +79,36 @@ helpers do
 			:neighbour => nhbr      # in case the caller wants to do something with it
 		}
 	end
+
+	def validate_token( atoken )
+		if atoken.nil?
+			response = { 
+				:status => 'fail',
+				:data   => {'message' => 'no atoken'} 
+			}
+		else
+			nhbrs = Neighbour.all( :atoken => atoken )
+	
+			if nhbrs.count == 0
+				response = { 
+					:status => 'fail',
+					:data   => {'message' => 'unrecognised token'} 
+				}
+			elsif nhbrs.count > 1
+				response = {
+					:status  => 'error',
+					:message => 'duplicate atoken found'
+				}
+			else
+				response = {
+					:status => 'success',
+					:data   => { :neighbour => nhbrs.first }
+				}
+			end
+		end
+
+		return response
+	end
 end
 
 #get '/' do
@@ -87,61 +117,77 @@ end
 
 get '/' do
 	content_type :json, 'charset' => 'utf-8'
-	"Hello World".to_json
+	
+	{ 
+		:status => 'success',
+		:data   => {:message => 'Hello World'} 
+	}.to_json
 end
 
 get '/neighbours' do
 	content_type :json, 'charset' => 'utf-8'
+	now = Time.now
 
-	atoken = params[:atoken]
+	atoken_response = validate_token( params[:atoken] )
 
-	if atoken.nil?
-		response = { 
-			'status' => 'fail',
-			'data' => {'message' => 'no atoken'} 
-		}
-	elsif Neighbour.count(:atoken => atoken) == 0
-		response = { 
-			'status' => 'success',
-			'data' => {'neighbours' => []} 
-		}
+	if atoken_response[:status] != 'success'
+		response = atoken_response
 	else
 		# get the nhbrs
 		if params.include?('latitude') and params.include?('longitude') and params.include?('radius')
+
 			latitude  = params['latitude'].to_f
 			longitude = params['longitude'].to_f
 			radius    = params['radius'].to_f
 	
-			nhbrs = Neighbour.all(
-				:latitude.gte  => latitude  - radius,
-				:latitude.lte  => latitude  + radius,
-				:longitude.gte => longitude - radius,
-				:longitude.lte => longitude + radius
+			# update the location of this instance
+			nhbr = atoken_response[:data][:neighbour]
+			update_ok = nhbr.update(
+				:latitude   => latitude,
+				:longitude  => longitude,
+				:updated_at => now
 				)
-	
-			# and another pass thru the list of neighbours to ensure we are actually within the radius (and not in the corners of the bounding square)
-			nhbrs.keep_if { |n|
-				distance_in_miles = Geocoder::Calculations.distance_between( [n['latitude'], n['longitude']], [latitude, longitude] )
-				distance_in_miles <= radius
-			}
-		else
+
+			if !update_ok
+				response = { 
+					:status  => 'error',
+					:message => 'failed to update location' 
+				}
+			else
+				nhbrs = Neighbour.all(
+					:latitude.gte  => latitude  - radius,
+					:latitude.lte  => latitude  + radius,
+					:longitude.gte => longitude - radius,
+					:longitude.lte => longitude + radius,
+					:id.not        => atoken_response[:data][:neighbour].id
+					)
+		
+				# and another pass thru the list of neighbours to ensure we are actually within the radius (and not in the corners of the bounding square)
+				nhbrs.keep_if { |n|
+					distance_in_miles = Geocoder::Calculations.distance_between( [n['latitude'], n['longitude']], [latitude, longitude] )
+					distance_in_miles <= radius
+				}
+			end
+		else # this is causing code awkwardness. should it be allowed?
 			nhbrs = Neighbour.all()
 		end
 
-		# extract only the subset of data from each nhbr for return
-		nhbrs_basics = nhbrs.map { |n| 
-			{
-				:name       => n.name,
-				:latitude   => n.latitude,
-				:longitude  => n.longitude,
-				:updated_at => n.updated_at
+		if response.nil?
+			# extract only the subset of data from each nhbr for return
+			nhbrs_basics = nhbrs.map { |n| 
+				{
+					:name       => n.name,
+					:latitude   => n.latitude,
+					:longitude  => n.longitude,
+					:updated_at => n.updated_at
+				}
+			 }
+	
+			response = { 
+				'status' => 'success',
+				'data' => {'neighbours' => nhbrs_basics} 
 			}
-		 }
-
-		response = { 
-			'status' => 'success',
-			'data' => {'neighbours' => nhbrs_basics} 
-		}
+		end
 	end
 
 	return response.to_json
@@ -154,43 +200,49 @@ end
 get '/add_random_neighbours' do
 	content_type :json, 'charset' => 'utf-8'
 
-	num       = (params[:num]       || 3  ).to_i
-	radius    = (params[:radius]    || 1  ).to_f # miles
-	latitude  = (params[:latitude]  || 0.0).to_f
-	longitude = (params[:longitude] || 0.0).to_f
+	atoken_response = validate_token( params[:atoken] )
 
-	now          = Time.now
-	before_count = Neighbour.count
-	responses    = []
-
-	num.times do |i|
-		random_coords = Geocoder::Calculations.random_point_near([latitude, longitude], radius)
-		
-		random_params = {
-			:latitude  => random_coords.first,
-			:longitude => random_coords.last,
-			:name      => "neighbour #{now.to_f}, #{i} of #{num}",
-			:email     => SecureRandom.hex(10) + '@madeupdomain.com'
-		}
-
-		registration = register_new_neighbour( random_params )
-		responses << registration[:response]
-	end
-
-	after_count = Neighbour.count
-	num_added   = after_count - before_count
-
-	if num_added == num
-		response = { 
-			:status => 'success',
-			:data   => {:num_added => num_added} 
-		}
+	if atoken_response[:status] != 'success'
+		response = atoken_response
 	else
-		response = { 
-			:status => 'fail',
-			:data   => {:message => "only added #{num_added} out of #{num}: responses=#{responses.to_s}"} 
-		}
-
+		num       = (params[:num]       || 3  ).to_i
+		radius    = (params[:radius]    || 1  ).to_f # miles
+		latitude  = (params[:latitude]  || 0.0).to_f
+		longitude = (params[:longitude] || 0.0).to_f
+	
+		now          = Time.now
+		before_count = Neighbour.count
+		responses    = []
+	
+		num.times do |i|
+			new_latitude, new_longitude = 
+				Geocoder::Calculations.random_point_near([latitude, longitude], radius)
+			
+			random_params = {
+				:latitude  => new_latitude,
+				:longitude => new_longitude,
+				:name      => "neighbour #{now.to_f}, #{i} of #{num}",
+				:email     => SecureRandom.hex(10) + '@madeupdomain.com'
+			}
+	
+			registration = register_new_neighbour( random_params )
+			responses << registration[:response]
+		end
+	
+		after_count = Neighbour.count
+		num_added   = after_count - before_count
+	
+		if num_added == num
+			response = { 
+				:status => 'success',
+				:data   => {:num_added => num_added} 
+			}
+		else
+			response = { 
+				:status => 'fail',
+				:data   => {:message => "only added #{num_added} out of #{num}: responses=#{responses.to_s}"} 
+			}
+		end
 	end
 
 	return response.to_json

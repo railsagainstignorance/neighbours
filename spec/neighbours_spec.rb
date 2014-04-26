@@ -18,7 +18,7 @@ def assert_success_and_get_parsed_data( last_response )
 	parsed_body = JSON.parse( last_response.body )
 	parsed_body.must_be_kind_of(Hash)
 	parsed_body.must_include('status')
-	parsed_body['status'].must_equal 'success', "expected status=success, got #{parsed_body['status']}: body=#{parsed_body}"
+	'success'.must_equal parsed_body['status'], "expected status=success, got #{parsed_body['status']}: body=#{parsed_body}"
 	parsed_body.must_include('data')
 	parsed_body['data'].must_be_kind_of(Hash)
 	return parsed_body['data']
@@ -38,22 +38,15 @@ describe "Neighbours" do
 		Neighbour.destroy
 	end
 
-	it "should return hello world in json and utf8" do
+	it "should return hello world in json and utf8 and jsend" do
 		get '/'
-		assert_last_response_ok_json_utf8(last_response)
-		intended = "Hello World".to_json
-		intended.must_equal last_response.body
+		message = assert_success_and_get_parsed_data_field( last_response, 'message', String )
+		message.must_equal 'Hello World'
 	end
 
 	it "should return the favicon.ico" do
 		get '/favicon.ico'
 		assert last_response.ok?, "response code not ok"
-	end
-
-	it "should return no neighbours" do
-		get '/neighbours'
-		assert_last_response_ok_json_utf8(last_response)
-		last_response.body.must_equal [].to_json
 	end
 
 	it "should add 3 random neighbours within radius 1" do
@@ -62,30 +55,40 @@ describe "Neighbours" do
 		radius    = 1.0 # mile
 		num       = 3
 
+		# register a user in order to get an atoken
+		put '/register',
+			:name      => 'Chris',
+			:email     => 'cgathercole@gmail.com',
+			:password  => 'aBc',
+			:latitude  => latitude,
+			:longitude => longitude
+
+		atoken = assert_success_and_get_parsed_data_field( last_response, 'atoken', String )
+
 		# create the neighbours
 		get '/add_random_neighbours', 
 			:num       => num,
 			:radius    => radius,
 			:latitude  => latitude,
-			:longitude => longitude
+			:longitude => longitude,
+			:atoken    => atoken
 		
 		num_added = assert_success_and_get_parsed_data_field( last_response, 'num_added', Integer )
+		num_added.must_equal 3
 
 		# retrieve all neighbours
-		get '/neighbours'
-		assert_last_response_ok_json_utf8(last_response)
-		neighbours = JSON.parse( last_response.body )
-		neighbours.count.must_equal num
-
+		get '/neighbours',
+			:atoken    => atoken
+		neighbours = assert_success_and_get_parsed_data_field( last_response, 'neighbours', Array )
 		assert_neighbours_within_radius( neighbours, radius, latitude, longitude)
 
 		# retrieve local neighbours for a point which should have them
 		get '/neighbours', 
 			:radius    => radius,
 			:latitude  => latitude,
-			:longitude => longitude
-		assert_last_response_ok_json_utf8(last_response)
-		neighbours = JSON.parse( last_response.body )
+			:longitude => longitude,
+			:atoken    => atoken
+		neighbours = assert_success_and_get_parsed_data_field( last_response, 'neighbours', Array )
 		neighbours.count.must_equal num
 
 		assert_neighbours_within_radius( neighbours, radius, latitude, longitude)
@@ -95,11 +98,10 @@ describe "Neighbours" do
 		get '/neighbours', 
 			:radius    => radius,
 			:latitude  => latitude + far_away,
-			:longitude => longitude + far_away
-
-		assert_last_response_ok_json_utf8(last_response)
-		neighbours = JSON.parse( last_response.body )
-		0.must_equal neighbours.count, "should be no such neighbours, but found #{neighbours.count}"
+			:longitude => longitude + far_away,
+			:atoken    => atoken
+		neighbours = assert_success_and_get_parsed_data_field( last_response, 'neighbours', Array )
+		neighbours.count.must_equal 0
 	end
 
 	it "should register a new user" do
@@ -122,7 +124,65 @@ describe "Neighbours" do
 			:atoken    => atoken
 
 		neighbours = assert_success_and_get_parsed_data_field( last_response, 'neighbours', Array )
-		neighbours.count.must_equal 1, "expected 1 nhbr, got #{neighbours.count}: #{neighbours.to_s}"
+		neighbours.count.must_equal 0
+	end
+
+	it "should change own location when making neighbours request" do
+		separation    = 100
+		random_radius = 10
+		initial_lat, initial_long = [10.0, 12.0]
+
+		coords = []
+		coords << Geocoder::Calculations.random_point_near([initial_lat, initial_long], random_radius )
+		coords << Geocoder::Calculations.random_point_near([initial_lat + separation, initial_long], random_radius )
+
+		atokens = []
+
+		# register two instances
+		(0..1).each do |i|
+			put '/register',
+				:name      => "Test_#{i}",
+				:email     => "test_#{i}\@madeupdomain.com",
+				:password  => "aBc#{i}",
+				:latitude  => coords[i].first,
+				:longitude => coords[i].last
+
+			atokens << assert_success_and_get_parsed_data_field( last_response, 'atoken', String )
+		end
+
+		nearby_radius = 1
+
+		# establish the instances are alone (at their original locations)
+		(0..1).each do |i|
+			get '/neighbours', 
+				:radius    => nearby_radius,
+				:latitude  => coords[i].first,
+				:longitude => coords[i].last,
+				:atoken    => atokens[i]
+	
+			neighbours = assert_success_and_get_parsed_data_field( last_response, 'neighbours', Array )
+			neighbours.count.must_equal 0
+		end
+
+		# move first instance to near the second instance
+		nearby_coords = Geocoder::Calculations.random_point_near( coords.last, nearby_radius )
+
+		get '/neighbours', 
+			:radius    => nearby_radius,
+			:latitude  => nearby_coords.first,
+			:longitude => nearby_coords.last,
+			:atoken    => atokens.first
+		neighbours = assert_success_and_get_parsed_data_field( last_response, 'neighbours', Array )
+		neighbours.count.must_equal 1
+
+		# recheck the second instance at its original location
+		get '/neighbours', 
+			:radius    => nearby_radius,
+			:latitude  => coords.last.first,
+			:longitude => coords.last.last,
+			:atoken    => atokens.last
+		neighbours = assert_success_and_get_parsed_data_field( last_response, 'neighbours', Array )
+		neighbours.count.must_equal 1
 	end
 
 end

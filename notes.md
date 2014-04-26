@@ -196,3 +196,6 @@ ToDo
 - refactored /register into def register_new_neighbour
 - refactoring /neighbours and /add_random_neighbours
    + still errors, but fewer
+- removing self from /neighbours response
+- refactoring expectations (https://gist.github.com/ordinaryzelig/2032303)
+   + need to change the order of expected/actual
