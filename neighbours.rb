@@ -47,6 +47,38 @@ helpers do
       		break random_token unless Neighbour.count(:atoken => random_token) > 0
     	end
 	end
+
+	def register_new_neighbour( params )
+		now  = Time.now
+		nhbr = Neighbour.new(
+			:name              => params['name'],
+			:email             => params['email'],
+			:latitude          => params['latitude'],
+			:longitude         => params['longitude'],
+			:created_at        => now,
+			:updated_at        => now,
+			:atoken            => generate_token(),
+			:atoken_created_at => now
+			)
+	
+		if nhbr.valid?
+			nhbr.save
+			response = { 
+				'status' => 'success',
+				'data' => {'atoken' => nhbr.atoken} 
+			}
+		else
+			response = { 
+				'status' => 'fail',
+				'data' => {'message' => 'failed validation'} 
+			}
+		end
+
+		return {
+			:response  => response, # NB, not yet json-ified
+			:neighbour => nhbr      # in case the caller wants to do something with it
+		}
+	end
 end
 
 #get '/' do
@@ -109,7 +141,7 @@ get '/neighbours' do
 			'data' => {'neighbours' => nhbrs_basics} 
 		}
 	end
-	
+
 	return response.to_json
 end
 
@@ -157,31 +189,6 @@ end
 
 put '/register' do
 	content_type :json, 'charset' => 'utf-8'
-	now = Time.now
-	nhbr = Neighbour.new(
-		:name              => params['name'],
-		:email             => params['name'],
-		:name              => params['name'],
-		:latitude          => params['latitude'],
-		:longitude         => params['longitude'],
-		:created_at        => now,
-		:updated_at        => now,
-		:atoken            => generate_token(),
-		:atoken_created_at => now
-		)
-
-	if nhbr.valid?
-		nhbr.save
-		response = { 
-			'status' => 'success',
-			'data' => {'atoken' => nhbr.atoken} 
-		}
-	else
-		response = { 
-			'status' => 'fail',
-			'data' => {'message' => 'failed validation'} 
-		}
-	end
-	
-	response.to_json
+	registration = register_new_neighbour( params )
+	return registration[:response].to_json
 end

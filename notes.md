@@ -191,3 +191,6 @@ ToDo
    + check requires token
    + pass in token
    + check returns correct response
+
+## 26/04/2014 08:45
+- refactored /register into def register_new_neighbour
