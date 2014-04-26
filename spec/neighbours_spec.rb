@@ -13,6 +13,25 @@ def assert_last_response_ok_json_utf8( last_response )
 	last_response.content_type.must_equal 'application/json;charset=utf-8'
 end
 
+def assert_success_and_get_parsed_data( last_response )
+	assert_last_response_ok_json_utf8(last_response)
+	parsed_body = JSON.parse( last_response.body )
+	parsed_body.must_be_kind_of(Hash)
+	parsed_body.must_include('status')
+	parsed_body['status'].must_equal 'success', "expected status=success, got #{parsed_body['status']}: body=#{parsed_body}"
+	parsed_body.must_include('data')
+	parsed_body['data'].must_be_kind_of(Hash)
+	return parsed_body['data']
+end
+
+def assert_success_and_get_parsed_data_field( last_response, field, type )
+	parsed_data = assert_success_and_get_parsed_data( last_response )
+	parsed_data.must_include( field )
+	value = parsed_data[field]
+	value.must_be_kind_of( type )
+	return value
+end
+
 describe "Neighbours" do
 
 	before do
@@ -49,10 +68,8 @@ describe "Neighbours" do
 			:radius    => radius,
 			:latitude  => latitude,
 			:longitude => longitude
-
-		assert_last_response_ok_json_utf8(last_response)
-
-		last_response.body.must_equal num.to_json
+		
+		num_added = assert_success_and_get_parsed_data_field( last_response, 'num_added', Integer )
 
 		# retrieve all neighbours
 		get '/neighbours'
@@ -96,23 +113,16 @@ describe "Neighbours" do
 			:latitude  => latitude,
 			:longitude => longitude
 
-		assert_last_response_ok_json_utf8(last_response)
-		parsed_body = JSON.parse( last_response.body )
-		parsed_body.must_be_kind_of(Hash)
-		parsed_body.must_include('status')
-		parsed_body['status'].must_equal 'success'
-		parsed_body.must_include('data')
-		parsed_body['data'].must_be_kind_of(Hash)
-		parsed_body['data'].must_include('atoken')
-		parsed_body['data']['atoken'].must_be_kind_of(String)
+		atoken = assert_success_and_get_parsed_data_field( last_response, 'atoken', String )
 
 		get '/neighbours', 
 			:radius    => 0.0,
 			:latitude  => latitude,
-			:longitude => longitude
-		assert_last_response_ok_json_utf8(last_response)
-		neighbours = JSON.parse( last_response.body )
-		neighbours.count.must_equal 1
+			:longitude => longitude,
+			:atoken    => atoken
+
+		neighbours = assert_success_and_get_parsed_data_field( last_response, 'neighbours', Array )
+		neighbours.count.must_equal 1, "expected 1 nhbr, got #{neighbours.count}: #{neighbours.to_s}"
 	end
 
 end

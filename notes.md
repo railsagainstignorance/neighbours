@@ -194,3 +194,5 @@ ToDo
 
 ## 26/04/2014 08:45
 - refactored /register into def register_new_neighbour
+- refactoring /neighbours and /add_random_neighbours
+   + still errors, but fewer

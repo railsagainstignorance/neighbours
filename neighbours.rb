@@ -51,10 +51,10 @@ helpers do
 	def register_new_neighbour( params )
 		now  = Time.now
 		nhbr = Neighbour.new(
-			:name              => params['name'],
-			:email             => params['email'],
-			:latitude          => params['latitude'],
-			:longitude         => params['longitude'],
+			:name              => params[:name],
+			:email             => params[:email],
+			:latitude          => params[:latitude],
+			:longitude         => params[:longitude],
 			:created_at        => now,
 			:updated_at        => now,
 			:atoken            => generate_token(),
@@ -70,7 +70,7 @@ helpers do
 		else
 			response = { 
 				'status' => 'fail',
-				'data' => {'message' => 'failed validation'} 
+				'data' => {'message' => "failed validation@: error=#{nhbr.errors.map { |e| e.to_s }.to_s}"} 
 			}
 		end
 
@@ -93,7 +93,9 @@ end
 get '/neighbours' do
 	content_type :json, 'charset' => 'utf-8'
 
-	if !params.include?('atoken')
+	atoken = params[:atoken]
+
+	if atoken.nil?
 		response = { 
 			'status' => 'fail',
 			'data' => {'message' => 'no atoken'} 
@@ -152,39 +154,46 @@ end
 get '/add_random_neighbours' do
 	content_type :json, 'charset' => 'utf-8'
 
-	params[:num]       ||= 3
-	params[:latitude]  ||= 0.0
-	params[:longitude] ||= 0.0
-	params[:radius]    ||= 1 # miles
+	num       = (params[:num]       || 3  ).to_i
+	radius    = (params[:radius]    || 1  ).to_f # miles
+	latitude  = (params[:latitude]  || 0.0).to_f
+	longitude = (params[:longitude] || 0.0).to_f
 
-	# params values will be strings, so need to convert them
-
-	num       = params[:num].to_i
-	latitude  = params[:latitude].to_f 
-	longitude = params[:longitude].to_f
-	radius    = params[:radius].to_f 
-
-	#puts "DEBUG: add_random_neighbours: latitude=#{latitude}, longitude=#{longitude}, radius=#{radius}"
-
+	now          = Time.now
 	before_count = Neighbour.count
-	before_count.to_json
+	responses    = []
+
 	num.times do |i|
-		now = Time.now
 		random_coords = Geocoder::Calculations.random_point_near([latitude, longitude], radius)
-		#puts "DEBUG: add_random_neighbours: i=#{i}, random_coords=#{random_coords.to_s}"
-		nhbr = Neighbour.first_or_create(
-			:name              => "neighbour #{now.to_f}",
-			:latitude          => random_coords.first,
-			:longitude         => random_coords.last,
-			:created_at        => now,
-			:updated_at        => now,
-			:email             => SecureRandom.hex(10) + '@madeup.com',
-			:atoken            => generate_token(),
-			:atoken_created_at => now
-			)
+		
+		random_params = {
+			:latitude  => random_coords.first,
+			:longitude => random_coords.last,
+			:name      => "neighbour #{now.to_f}, #{i} of #{num}",
+			:email     => SecureRandom.hex(10) + '@madeupdomain.com'
+		}
+
+		registration = register_new_neighbour( random_params )
+		responses << registration[:response]
 	end
+
 	after_count = Neighbour.count
-	(after_count - before_count).to_json
+	num_added   = after_count - before_count
+
+	if num_added == num
+		response = { 
+			:status => 'success',
+			:data   => {:num_added => num_added} 
+		}
+	else
+		response = { 
+			:status => 'fail',
+			:data   => {:message => "only added #{num_added} out of #{num}: responses=#{responses.to_s}"} 
+		}
+
+	end
+
+	return response.to_json
 end
 
 put '/register' do
