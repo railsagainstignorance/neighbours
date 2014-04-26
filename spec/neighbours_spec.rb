@@ -9,7 +9,7 @@ def assert_neighbours_within_radius( neighbours, radius, latitude, longitude)
 end
 
 def assert_last_response_ok_json_utf8( last_response )
-	assert last_response.ok?, "response code not ok"
+	assert last_response.ok?, "response code not ok: last_response.status=#{last_response.status}"
 	last_response.content_type.must_equal 'application/json;charset=utf-8'
 end
 
@@ -30,6 +30,17 @@ def assert_success_and_get_parsed_data_field( last_response, field, type )
 	value = parsed_data[field]
 	value.must_be_kind_of( type )
 	return value
+end
+
+def assert_response_fail( last_response )
+	assert_last_response_ok_json_utf8(last_response)
+	parsed_body = JSON.parse( last_response.body )
+	parsed_body.must_be_kind_of(Hash)
+	parsed_body.must_include('status')
+	'fail'.must_equal parsed_body['status'], "expected status=fail, got #{parsed_body['status']}: body=#{parsed_body}"
+	parsed_body.must_include('data')
+	parsed_body['data'].must_be_kind_of(Hash)
+	parsed_body['data'].must_include('message')
 end
 
 describe "Neighbours" do
@@ -185,4 +196,54 @@ describe "Neighbours" do
 		neighbours.count.must_equal 1
 	end
 
+	it "should re-register an existing user" do
+		latitude  = 0.0
+		longitude = 0.0
+		name      = 'Test re-register'
+		email     = 'testreregister@madeupdomain.com'
+		password  = 'testreregister'
+
+		put '/register',
+			:name      => name,
+			:email     => email,
+			:password  => password,
+			:latitude  => latitude,
+			:longitude => longitude
+
+		atoken = assert_success_and_get_parsed_data_field( last_response, 'atoken', String )
+
+		# verify can make a valid /neighbours request
+		get '/neighbours', 
+			:radius    => 0.0,
+			:latitude  => latitude,
+			:longitude => longitude,
+			:atoken    => atoken
+		neighbours = assert_success_and_get_parsed_data_field( last_response, 'neighbours', Array )
+		neighbours.count.must_equal 0
+
+		new_password = password + '2'
+		put '/re-register',
+			:name      => name,
+			:email     => email,
+			:password  => new_password,
+			:latitude  => latitude,
+			:longitude => longitude
+		new_atoken = assert_success_and_get_parsed_data_field( last_response, 'atoken', String )
+
+		# verify can make a valid /neighbours request with new atoken
+		get '/neighbours', 
+			:radius    => 0.0,
+			:latitude  => latitude,
+			:longitude => longitude,
+			:atoken    => new_atoken
+		neighbours = assert_success_and_get_parsed_data_field( last_response, 'neighbours', Array )
+		neighbours.count.must_equal 0
+		# verify cannot make a valid /neighbours request with old atoken
+		get '/neighbours', 
+			:radius    => 0.0,
+			:latitude  => latitude,
+			:longitude => longitude,
+			:atoken    => atoken
+		assert_response_fail( last_response )
+	end
 end

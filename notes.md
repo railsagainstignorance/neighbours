@@ -199,3 +199,17 @@ ToDo
 - removing self from /neighbours response
 - refactoring expectations (https://gist.github.com/ordinaryzelig/2032303)
    + need to change the order of expected/actual
+
+ToDo
+- check /neighbours does return excess user data
+- CORS?
+   + http://thibaultdenizet.com/tutorial/cors-with-angular-js-and-sinatra/
+
+- adding /re-register
+
+- Notes: long polling: http://www.sinatrarb.com/2011/09/30/sinatra-1.3.0.html
+
+- logging? 
+
+- documentation? https://github.com/jillesvangurp/sinatra-docdsl
+   + annoying buglet where the error entry in the footer seems to need the extra {...}

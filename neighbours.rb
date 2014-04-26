@@ -8,6 +8,8 @@ require 'dm-validations'
 require 'geocoder'
 require 'pp'
 
+require 'docdsl'
+
 configure :test do
 	DataMapper.setup( :default, "sqlite3::memory:" )
 end
@@ -35,10 +37,29 @@ class Neighbour
 	property :atoken,            String,                      :unique => true
 	property :atoken_created_at, DateTime, :required => true
 end
-
 DataMapper.finalize
-
 Neighbour.auto_upgrade!
+
+register Sinatra::DocDsl
+page do      
+	title "Neighbours POC"
+	introduction "update your location and see who is nearby."
+	footer "
+# A note on the API responses
+The API methods respond with JSON using the [JSEND convention](http://labs.omniti.com/labs/jsend).
+
+## success 
+{:status => 'success', :data => {:assorted => 'stuff', :that_makes_up => 'the response'}}
+
+## failure (because of the data provided)
+{:status => 'fail', :data => {:message => 'why did it fail with those params?'}}
+
+## error (because of code/system/karma)
+{{:status => 'error', :message => 'what was the error'}} <-- the [DocDSL](https://github.com/jillesvangurp/sinatra-docdsl) is a bit broken and needs the extra {...} on this one line
+
+## the end
+"
+end
 
 helpers do
 	def generate_token
@@ -80,6 +101,66 @@ helpers do
 		}
 	end
 
+	def re_register_neighbour( params )
+		now  = Time.now
+
+		missing_params = []
+		['name', 'email', 'latitude', 'longitude'].each do |n|
+			missing_params << n if ! params.include?(n)
+		end
+
+		if ! missing_params.empty?
+			response = {
+				:status => 'fail',
+				:data   => {
+					:message => "missing params: #{missing_params}"
+				}
+			}
+		else
+			nhbrs = Neighbour.all( :name => params['name'])
+
+			if nhbrs.count == 0
+				response = {
+					:status => 'fail',
+					:data => {
+						:message => 'no such user'
+					}
+				}
+			elsif nhbrs.count > 1
+				response = {
+					:status => 'error',
+					:message => 'duplicate users'
+				}
+			else
+				nhbr = nhbrs.first
+
+				nhbr.latitude          = params[:latitude]
+				nhbr.longitude         = params[:longitude]
+				nhbr.atoken            = generate_token()
+				nhbr.atoken_created_at = now
+				nhbr.updated_at        = now
+			
+				if nhbr.valid?
+					nhbr.save
+					response = { 
+						'status' => 'success',
+						'data' => {'atoken' => nhbr.atoken} 
+					}
+				else
+					response = { 
+						'status' => 'fail',
+						'data' => {'message' => "failed validation@: error=#{nhbr.errors.map { |e| e.to_s }.to_s}"} 
+					}
+				end
+			end
+		end
+
+		return {
+			:response  => response, # NB, not yet json-ified
+			:neighbour => nhbr      # in case the caller wants to do something with it
+		}
+	end
+
 	def validate_token( atoken )
 		if atoken.nil?
 			response = { 
@@ -111,10 +192,9 @@ helpers do
 	end
 end
 
-#get '/' do
-#	halt(404)
-#end
-
+documentation 'Hello? Is this thing on?' do
+    response '', { :status => 'success', :data => { :message => 'Hello World' }}
+end
 get '/' do
 	content_type :json, 'charset' => 'utf-8'
 	
@@ -124,6 +204,20 @@ get '/' do
 	}.to_json
 end
 
+documentation 'user updates location and receives list of neighbours' do
+    query_param :latitude,  'current location of user'
+    query_param :longitude, 'current location of user'
+    query_param :radius,    'how big is the neighbourhood? (possibly being deprecated)'
+    query_param :atoken,    'authentication token'
+    response '', {
+    	:status => 'success', 
+    	:data => { :neighbours => {
+    		:name => "neighbour's name",
+    		:latitude => 'most recent location of neighbour',
+    		:longitude => 'most recent location of neighbour',
+    		:updated_at => 'when neighbour last updated their location'
+    		}}}
+end
 get '/neighbours' do
 	content_type :json, 'charset' => 'utf-8'
 	now = Time.now
@@ -248,8 +342,31 @@ get '/add_random_neighbours' do
 	return response.to_json
 end
 
+documentation "register a new user" do
+    query_param :name, "user name (must be unique)"
+    query_param :email, "email address (not used yet, but must be unique)"
+    query_param :latitude, "current location of user"
+    query_param :longitude, "current location of user"
+    response '', {:status => 'success', :data => {:atoken => 'to be used in all subsequent requests by user'}}
+end
 put '/register' do
 	content_type :json, 'charset' => 'utf-8'
 	registration = register_new_neighbour( params )
 	return registration[:response].to_json
 end
+
+documentation "re-register a new user (due to lost/invalidated token)" do
+    query_param :name, "user name (must be unique)"
+    query_param :email, "email address (not used yet, but must be unique)"
+    query_param :latitude, "current location of user"
+    query_param :longitude, "current location of user"
+    response '', {:status => 'success', :data => {:atoken => 'to be used in all subsequent requests by user'}}
+end
+put '/re-register' do
+	content_type :json, 'charset' => 'utf-8'
+	registration = re_register_neighbour( params )
+	return registration[:response].to_json
+end
+
+# this tells docdsl to render the documentation when you do a GET on /doc
+doc_endpoint "/doc"  

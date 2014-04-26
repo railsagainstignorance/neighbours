@@ -6,6 +6,8 @@ gem "json"
 gem "data_mapper"
 gem "geocoder"
 
+gem 'sinatra-docdsl'
+
 group :test do
 	gem "rack-test"
 end
