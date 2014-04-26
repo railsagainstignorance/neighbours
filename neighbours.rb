@@ -392,6 +392,10 @@ doc_endpoint "/doc"
 # web-facing routes
 
 get '/web/register' do
-	@title = 'register'
 	erb :register
+end
+
+get '/web/neighbours' do
+	# check params, do registration, obtain atoken
+	erb :neighbours, :locals => {:atoken => "abc123", :radius => "1"}
 end

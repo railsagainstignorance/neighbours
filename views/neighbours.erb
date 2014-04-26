@@ -1,0 +1,11 @@
+<h2>neighbours</h2>
+
+<div id="neighbour_form">
+  <form action="/web/neighbours" method="get">
+	latitude: <input type="text" name="latitude"><br/>
+	longitude: <input type="text" name="longitude"><br/>
+	<input type="hidden" name="radius" value="<%= radius %>">
+	<input type="hidden" name="atoken" value="<%= atoken %>">
+    <input type="submit" value="Neighbours!">
+  </form>
+</div>
