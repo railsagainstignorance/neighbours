@@ -7,6 +7,7 @@ gem "data_mapper"
 gem "geocoder"
 
 gem 'sinatra-docdsl'
+gem 'rest-client'
 
 group :test do
 	gem "rack-test"

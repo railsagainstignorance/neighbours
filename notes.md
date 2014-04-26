@@ -218,4 +218,7 @@ ToDo
 
 - add basic pages
    + views/layout.erb
-   + 
+
+- adding put /do_register
+   + needed to use the shimmy: <input type="hidden" name="_method" value="put" /> and form action="post"
+   

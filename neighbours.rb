@@ -9,6 +9,9 @@ require 'geocoder'
 require 'pp'
 
 require 'docdsl'
+require 'rest_client'
+require 'uri'
+require 'logger'
 
 configure :test do
 	DataMapper.setup( :default, "sqlite3::memory:" )
@@ -238,6 +241,8 @@ documentation 'user updates location and receives list of neighbours' do
 end
 get '/neighbours' do
 	content_type :json, 'charset' => 'utf-8'
+	logger.info "/neighbours: params=#{params.to_s}"
+
 	now = Time.now
 
 	atoken_response = validate_token( params[:atoken] )
@@ -392,10 +397,47 @@ doc_endpoint "/doc"
 # web-facing routes
 
 get '/web/register' do
-	erb :register
+	erb :register, :locals => {:msg => params['msg']}
 end
+
+put '/web/do_register' do
+	# "reached put '/web/do_register'"
+	api_response_json = RestClient.put 'http://localhost:4567/register', params
+	api_response = JSON.parse(api_response_json)
+
+	if api_response['status'] == 'fail'
+		redirect to("/web/register?msg=#{URI.escape(api_response['data']['message'])}")
+	elsif api_response['status'] == 'error'
+		redirect to("/web/register?msg=#{URI.escape(api_response['message'])}")
+	else
+		atoken    = api_response['data']['atoken']
+		latitude  = params['latitude']
+		longitude = params['longitude']
+		redirect to("/web/neighbours?atoken=#{URI.escape(atoken)}&latitude=#{URI.escape(latitude)}&longitude=#{URI.escape(longitude)}")
+	end
+end
+
 
 get '/web/neighbours' do
 	# check params, do registration, obtain atoken
-	erb :neighbours, :locals => {:atoken => "abc123", :radius => "1"}
+	api_response_json = RestClient.get 'http://localhost:4567/neighbours', params
+	api_response = JSON.parse(api_response_json)
+
+	halt 200, api_response.to_s + params.to_s
+
+	if api_response['status'] == 'fail'
+		redirect to("/web/register?msg=#{URI.escape(api_response['data']['message'])}")
+	elsif api_response['status'] == 'error'
+		redirect to("/web/register?msg=#{URI.escape(api_response['message'])}")
+	else
+		#erb :neighbours, 
+		#	:locals => {
+		#		:atoken     => params['atoken'], 
+		#		:radius     => "1",
+		#		:latitude   => params['latitude']  || 0.0,
+		#		:longitude  => params['longitude'] || 0.0
+		#	}
+
+		params.to_s
+	end
 end
