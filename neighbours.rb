@@ -25,12 +25,15 @@ Geocoder.configure( ) # default=:mi, but might want to specify :units => :km
 class Neighbour
 	include DataMapper::Resource
 
-	property :id, 		        Serial
-	property :name, 	        String,   :required => true, :unique => true
-	property :latitude,         Float,    :required => true
-	property :longitude,        Float,    :required => true
-	property :created_at,       DateTime, :required => true
-	property :updated_at,       DateTime, :required => true
+	property :id, 		         Serial
+	property :name, 	         String,   :required => true, :unique => true
+	property :latitude,          Float,    :required => true
+	property :longitude,         Float,    :required => true
+	property :created_at,        DateTime, :required => true
+	property :updated_at,        DateTime, :required => true
+	property :email,             String,                      :unique => true
+	property :atoken,            String,                      :unique => true
+	property :atoken_created_at, DateTime, :required => true
 end
 
 DataMapper.finalize
@@ -38,7 +41,12 @@ DataMapper.finalize
 Neighbour.auto_upgrade!
 
 helpers do
-	
+	def generate_token
+		loop do
+      		random_token = SecureRandom.urlsafe_base64(nil, false)
+      		break random_token unless Neighbour.count(:atoken => random_token) > 0
+    	end
+	end
 end
 
 #get '/' do
@@ -58,10 +66,10 @@ get '/neighbours' do
 		radius    = params['radius'].to_f
 
 		nhbrs = Neighbour.all(
-			:latitude.gt  => latitude  - radius,
-			:latitude.lt  => latitude  + radius,
-			:longitude.gt => longitude - radius,
-			:longitude.lt => longitude + radius
+			:latitude.gte  => latitude  - radius,
+			:latitude.lte  => latitude  + radius,
+			:longitude.gte => longitude - radius,
+			:longitude.lte => longitude + radius
 			)
 
 		# and another pass thru the list of neighbours to ensure we are actually within the radius (and not in the corners of the bounding square)
@@ -103,11 +111,14 @@ get '/add_random_neighbours' do
 		random_coords = Geocoder::Calculations.random_point_near([latitude, longitude], radius)
 		#puts "DEBUG: add_random_neighbours: i=#{i}, random_coords=#{random_coords.to_s}"
 		nhbr = Neighbour.first_or_create(
-			:name       => "neighbour #{now.to_f}",
-			:latitude   => random_coords.first,
-			:longitude  => random_coords.last,
-			:created_at => now,
-			:updated_at => now
+			:name              => "neighbour #{now.to_f}",
+			:latitude          => random_coords.first,
+			:longitude         => random_coords.last,
+			:created_at        => now,
+			:updated_at        => now,
+			:email             => SecureRandom.hex(10) + '@madeup.com',
+			:atoken            => generate_token(),
+			:atoken_created_at => now
 			)
 	end
 	after_count = Neighbour.count
@@ -116,12 +127,31 @@ end
 
 put '/register' do
 	content_type :json, 'charset' => 'utf-8'
+	now = Time.now
+	nhbr = Neighbour.new(
+		:name              => params['name'],
+		:email             => params['name'],
+		:name              => params['name'],
+		:latitude          => params['latitude'],
+		:longitude         => params['longitude'],
+		:created_at        => now,
+		:updated_at        => now,
+		:atoken            => generate_token(),
+		:atoken_created_at => now
+		)
 
-	
-	response = { 
-		'status' => 'success',
-		'data' => {'atoken' => '1234567890'} 
-	}
+	if nhbr.valid?
+		nhbr.save
+		response = { 
+			'status' => 'success',
+			'data' => {'atoken' => nhbr.atoken} 
+		}
+	else
+		response = { 
+			'status' => 'fail',
+			'data' => {'message' => 'failed validation'} 
+		}
+	end
 	
 	response.to_json
 end

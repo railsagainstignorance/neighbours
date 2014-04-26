@@ -86,12 +86,15 @@ describe "Neighbours" do
 	end
 
 	it "should register a new user" do
+		latitude  = 0.0
+		longitude = 0.0
+
 		put '/register',
-			:name          => 'Chris',
-			:email_address => 'cgathercole@gmail.com',
-			:password      => 'aBc',
-			:latitude      => 0.0,
-			:longitude     => 0.0
+			:name      => 'Chris',
+			:email     => 'cgathercole@gmail.com',
+			:password  => 'aBc',
+			:latitude  => latitude,
+			:longitude => longitude
 
 		assert_last_response_ok_json_utf8(last_response)
 		parsed_body = JSON.parse( last_response.body )
@@ -102,6 +105,14 @@ describe "Neighbours" do
 		parsed_body['data'].must_be_kind_of(Hash)
 		parsed_body['data'].must_include('atoken')
 		parsed_body['data']['atoken'].must_be_kind_of(String)
+
+		get '/neighbours', 
+			:radius    => 0.0,
+			:latitude  => latitude,
+			:longitude => longitude
+		assert_last_response_ok_json_utf8(last_response)
+		neighbours = JSON.parse( last_response.body )
+		neighbours.count.must_equal 1
 	end
 
 end
