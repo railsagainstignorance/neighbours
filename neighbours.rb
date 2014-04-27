@@ -16,6 +16,10 @@ require 'logger'
 require 'nokogiri'
 require 'open-uri'
 
+configure do
+	set :default_radius, 1.0
+end
+
 configure :test do
 	DataMapper.setup( :default, "sqlite3::memory:" )
 end
@@ -68,6 +72,7 @@ The API methods respond with JSON using the [JSEND convention](http://labs.omnit
 end
 
 helpers do
+
 	def generate_token
 		loop do
       		random_token = SecureRandom.urlsafe_base64(nil, false)
@@ -97,7 +102,7 @@ helpers do
 		else
 			response = { 
 				'status' => 'fail',
-				'data' => {'message' => "failed validation@: error=#{nhbr.errors.map { |e| e.to_s }.to_s}"} 
+				'data' => {'message' => "failed validation: error=#{nhbr.errors.map { |e| e.to_s }.to_s}"} 
 			}
 		end
 
@@ -171,7 +176,7 @@ helpers do
 		if atoken.nil?
 			response = { 
 				:status => 'fail',
-				:data   => {'message' => 'no atoken'} 
+				:data   => {:message => 'no atoken'} 
 			}
 		else
 			nhbrs = Neighbour.all( :atoken => atoken )
@@ -179,7 +184,7 @@ helpers do
 			if nhbrs.count == 0
 				response = { 
 					:status => 'fail',
-					:data   => {'message' => 'unrecognised token'} 
+					:data   => {:message => 'unrecognised token'} 
 				}
 			elsif nhbrs.count > 1
 				response = {
@@ -197,15 +202,17 @@ helpers do
 		return response
 	end
 
-	def extract_neighbour_basics( nhbrs )
-		nhbrs.map { |n| 
+	def extract_neighbour_basics( n )
 			{
 				:name       => n.name,
 				:latitude   => n.latitude,
 				:longitude  => n.longitude,
 				:updated_at => n.updated_at
 			}
-		 }
+	end
+
+	def extract_neighbours_basics( nhbrs )
+		nhbrs.map { |n| extract_neighbour_basics(n) }
 	end
 
 	def lookup_neighbours( params )
@@ -220,7 +227,7 @@ helpers do
 				)
 			response = { 
 				:status => 'fail',
-				:data   => {'message' => 'missing any/all of latitude/longitude/radius'} 
+				:data   => {:message => 'missing any/all of latitude/longitude/radius'} 
 			}
 		else
 			latitude  = params['latitude'].to_f
@@ -239,7 +246,7 @@ helpers do
 					:message => 'failed to update location' 
 				}
 			else
-				nhbrs_basics = extract_neighbour_basics( 
+				nhbrs_basics = extract_neighbours_basics( 
 						Neighbour.all(
 							:latitude.gte  => latitude  - radius,
 							:latitude.lte  => latitude  + radius,
@@ -255,13 +262,16 @@ helpers do
 					n[:distance] = distance_in_miles # possibly naughty, but modifies the nhbr
 					distance_in_miles <= radius
 				}
-				
+
 				# sort by distance, closest first
-				nhbrs_basics.sort! { |x,y| y[:distance] <=> x[:distance] }
+				nhbrs_basics.sort! { |x,y| x[:distance] <=> y[:distance] }
 
 				response = { 
 					'status' => 'success',
-					'data' => {'neighbours' => nhbrs_basics} 
+					'data' => {
+						'neighbours' => nhbrs_basics,
+						'me'         => extract_neighbour_basics(nhbr)
+					} 
 				}
 			end
 		end
@@ -275,7 +285,7 @@ helpers do
 		if atoken_response[:status] != 'success'
 			response = atoken_response
 		else
-			nhbrs_basics = extract_neighbour_basics( Neighbour.all() )
+			nhbrs_basics = extract_neighbours_basics( Neighbour.all() )
 			
 			response = { 
 				'status' => 'success',
@@ -372,12 +382,21 @@ documentation 'user updates location and receives list of neighbours' do
     query_param :atoken,    'authentication token'
     response '', {
     	:status => 'success', 
-    	:data => { :neighbours => {
-    		:name => "neighbour's name",
-    		:latitude => 'most recent location of neighbour',
-    		:longitude => 'most recent location of neighbour',
-    		:updated_at => 'when neighbour last updated their location'
-    		}}}
+    	:data => { 
+    		:neighbours => {
+    			:name => "neighbour's name",
+    			:latitude => 'most recent location of neighbour',
+    			:longitude => 'most recent location of neighbour',
+    			:updated_at => 'when neighbour last updated their location'
+    			},
+    		:me => {
+    			:name => "my name",
+    			:latitude => 'my most recent location',
+    			:longitude => 'my most recent location',
+    			:updated_at => 'when I last updated my location'
+    			}
+    		}
+    	}
 end
 get '/neighbours' do
 	content_type :json, 'charset' => 'utf-8'
@@ -452,7 +471,7 @@ put '/web/do_register' do
 		atoken    = api_response['data']['atoken']
 		latitude  = params['latitude']
 		longitude = params['longitude']
-		redirect to("/web/neighbours?atoken=#{URI.escape(atoken)}&latitude=#{URI.escape(latitude)}&longitude=#{URI.escape(longitude)}")
+		redirect to("/web/neighbours?atoken=#{URI.escape(atoken)}&latitude=#{URI.escape(latitude)}&longitude=#{URI.escape(longitude)}&radius=#{settings.default_radius}")
 	end
 end
 
@@ -460,18 +479,22 @@ get '/web/neighbours' do
 	# check params, do registration, obtain atoken
 	api_response = lookup_neighbours( params )
 
-	if api_response['status'] == 'fail'
-		redirect to("/web/register?msg=#{URI.escape(api_response['data']['message'])}")
-	elsif api_response['status'] == 'error'
-		redirect to("/web/register?msg=#{URI.escape(api_response['message'])}")
+	if api_response[:status] == 'fail'
+		message = api_response[:data][:message] || "no message"
+		escaped_message = URI.escape(message)
+		redirect to("/web/register?msg=#{escaped_message}")
+	elsif api_response[:status] == 'error'
+		message = api_response[:message] || "no message"
+		redirect to("/web/register?msg=#{URI.escape(message)}")
 	else
 		erb :neighbours, 
 			:locals => {
 				:atoken     => params['atoken'], 
-				:radius     => 1.0,
+				:radius     => settings.default_radius,
 				:latitude   => params['latitude']  || 0.0,
 				:longitude  => params['longitude'] || 0.0,
-				:neighbours => api_response['data']['neighbours']
+				:neighbours => api_response['data']['neighbours'],
+				:me         => api_response['data']['me']
 			}
 	end
 end

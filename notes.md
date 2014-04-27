@@ -250,3 +250,7 @@ ToDo
    + fixed bug which did not find neighbours
 
 - should refactor out the /neighbours with no location/radius into a separate method
+
+- not done /web/re-register
+
+- maybe require atoken *and name*

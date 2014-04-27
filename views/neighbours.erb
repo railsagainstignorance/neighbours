@@ -6,12 +6,16 @@
 	longitude: <input type="text" name="longitude" value="<%= longitude %>"><br/>
 	<input type="hidden" name="radius" value="<%= radius %>">
 	<input type="hidden" name="atoken" value="<%= atoken %>">
-    <input type="submit" value="Neighbours!">
+    <input type="submit" value="Find My Neighbours!">
   </form>
 </div>
 
+<div id="my-details">
+	<%= "I am <B>#{me[:name]}</B>, last updated at [#{me[:latitude]},#{me[:longitude]}] on #{me[:updated_at]}." %>
+</div>
+
 <div id="neighbours">
-	<h2 id="neighbours-list-heading">all the lovely lovely neighbours</h2>
+	<h2 id="neighbours-list-heading">all my lovely lovely neighbours</h2>
 	<% if neighbours.count > 0 %>
 		<ul id="neighbours-list">
 		<%= neighbours.map {|n| "<li> \"<B>#{n[:name]}</B>\" #{n[:distance]} miles away at [#{n[:latitude]},#{n[:longitude]}] on #{n[:updated_at]}"}.join("\n") %>
