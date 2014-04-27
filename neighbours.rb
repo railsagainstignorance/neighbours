@@ -440,7 +440,8 @@ get '/web/neighbours' do
 				:atoken     => params['atoken'], 
 				:radius     => "1",
 				:latitude   => params['latitude']  || 0.0,
-				:longitude  => params['longitude'] || 0.0
+				:longitude  => params['longitude'] || 0.0,
+				:neighbours => api_response['data']['neighbours']
 			}
 	end
 end
