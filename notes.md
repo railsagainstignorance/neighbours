@@ -247,3 +247,6 @@ ToDo
 - /web/neighbours now works
    + ToDo: add display of neighbour entities in the page. DONE
    + add distance field, sort by distance, closest first
+   + fixed bug which did not find neighbours
+
+- should refactor out the /neighbours with no location/radius into a separate method

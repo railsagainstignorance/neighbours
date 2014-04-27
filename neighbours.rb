@@ -214,56 +214,73 @@ helpers do
 	
 		if atoken_response[:status] != 'success'
 			response = atoken_response
+		elsif ! ( 	params.include?('latitude') and 
+					params.include?('longitude') and 
+					params.include?('radius') 
+				)
+			response = { 
+				:status => 'fail',
+				:data   => {'message' => 'missing any/all of latitude/longitude/radius'} 
+			}
 		else
-			# get the nhbrs
-			if params.include?('latitude') and params.include?('longitude') and params.include?('radius')
-	
-				latitude  = params['latitude'].to_f
-				longitude = params['longitude'].to_f
-				radius    = params['radius'].to_f
-		
-				# update the location of this instance
-				nhbr = atoken_response[:data][:neighbour]
-				update_ok = nhbr.update(
-					:latitude   => latitude,
-					:longitude  => longitude,
-					:updated_at => now
-					)
-	
-				if !update_ok
-					response = { 
-						:status  => 'error',
-						:message => 'failed to update location' 
-					}
-				else
-					nhbrs = Neighbour.all(
+			latitude  = params['latitude'].to_f
+			longitude = params['longitude'].to_f
+			radius    = params['radius'].to_f
+					# update the location of this instance
+			nhbr = atoken_response[:data][:neighbour]
+			update_ok = nhbr.update(
+				:latitude   => latitude,
+				:longitude  => longitude,
+				:updated_at => now
+				)
+			if !update_ok
+				response = { 
+					:status  => 'error',
+					:message => 'failed to update location' 
+				}
+			else
+				nhbrs_basics = extract_neighbour_basics( 
+						Neighbour.all(
 							:latitude.gte  => latitude  - radius,
 							:latitude.lte  => latitude  + radius,
 							:longitude.gte => longitude - radius,
 							:longitude.lte => longitude + radius,
 							:id.not        => nhbr.id
 						)
+					)
 
-					nhbrs_basics = extract_neighbour_basics( nhbrs )
-					# and another pass thru the list of neighbours to ensure we are actually within the radius (and not in the corners of the bounding square)
-					nhbrs_basics.keep_if { |n|
-						distance_in_miles = Geocoder::Calculations.distance_between( [n[:latitude], n[:longitude]], [latitude, longitude] )
-						n[:distance] = distance_in_miles # possibly naughty, but modifies the nhbr
-						distance_in_miles <= radius
-					}
-					# sort by distance, closest first
-					nhbrs_basics.sort! { |x,y| y[:distance] <=> x[:distance] }
-				end
-			else # this is causing code awkwardness. should it be allowed?
-				nhbrs_basics = extract_neighbour_basics( Neighbour.all() )
-			end
-	
-			if response.nil?
+				# and another pass thru the list of neighbours to ensure we are actually within the radius (and not in the corners of the bounding square)
+				nhbrs_basics.keep_if { |n|
+					distance_in_miles = Geocoder::Calculations.distance_between( [n[:latitude], n[:longitude]], [latitude, longitude] )
+					n[:distance] = distance_in_miles # possibly naughty, but modifies the nhbr
+					distance_in_miles <= radius
+				}
+				
+				# sort by distance, closest first
+				nhbrs_basics.sort! { |x,y| y[:distance] <=> x[:distance] }
+
 				response = { 
 					'status' => 'success',
 					'data' => {'neighbours' => nhbrs_basics} 
 				}
 			end
+		end
+
+		return response
+	end
+
+	def lookup_neighbours_all( params )
+		atoken_response = validate_token( params[:atoken] )
+	
+		if atoken_response[:status] != 'success'
+			response = atoken_response
+		else
+			nhbrs_basics = extract_neighbour_basics( Neighbour.all() )
+			
+			response = { 
+				'status' => 'success',
+				'data' => {'neighbours' => nhbrs_basics} 
+			}
 		end
 
 		return response
@@ -368,6 +385,14 @@ get '/neighbours' do
 	response = lookup_neighbours( params )
 	return response.to_json
 end
+
+get '/neighbours/all' do
+	content_type :json, 'charset' => 'utf-8'
+	logger.info "/neighbours/all: params=#{params.to_s}"
+	response = lookup_neighbours_all( params )
+	return response.to_json
+end
+
 
 get '/neighbours_destroy' do
 	Neighbour.destroy

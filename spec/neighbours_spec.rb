@@ -91,7 +91,7 @@ describe "Neighbours" do
 		num_added.must_equal 3
 
 		# retrieve all neighbours
-		get '/neighbours',
+		get '/neighbours/all',
 			:atoken    => atoken
 		neighbours = assert_success_and_get_parsed_data_field( last_response, 'neighbours', Array )
 		assert_neighbours_within_radius( neighbours, radius, latitude, longitude)
