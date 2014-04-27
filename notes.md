@@ -245,5 +245,5 @@ ToDo
 - The question "how can I call a ruby route from inside another ruby route?" is probably best answered by, "you don't. Instead, refactor the route you want to re-use so that it calls a helper function, and make that helper function available to the other route."
 
 - /web/neighbours now works
-   + ToDo: add display of neighbour entities in the page
-
+   + ToDo: add display of neighbour entities in the page. DONE
+   + add distance field, sort by distance, closest first

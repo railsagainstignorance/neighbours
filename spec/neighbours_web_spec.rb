@@ -22,7 +22,7 @@ describe "NeighboursViaWeb" do
 		assert last_response.ok?, "response code not ok: last_response.status=#{last_response.status}"
 	end
 
-	it "should server the /web/neighbours page if given suitable params" do
+	it "should serve the /web/neighbours page if given suitable params" do
 		# obtain a valid atoken via the API
 		# pass it to the /web/neighbours page
 

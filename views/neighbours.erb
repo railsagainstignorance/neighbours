@@ -14,7 +14,7 @@
 	<h2 id="neighbours-list-heading">all the lovely lovely neighbours</h2>
 	<% if neighbours.count > 0 %>
 		<ul id="neighbours-list">
-		<%= neighbours.map {|n| "<li> \"<B>#{n[:name]}</B>\" at [#{n[:latitude]},#{n[:longitude]}] on #{n[:updated_at]}"}.join("\n") %>
+		<%= neighbours.map {|n| "<li> \"<B>#{n[:name]}</B>\" #{n[:distance]} miles away at [#{n[:latitude]},#{n[:longitude]}] on #{n[:updated_at]}"}.join("\n") %>
 		</ul>
 	<% else %>
 		and then there were none...

@@ -197,6 +197,17 @@ helpers do
 		return response
 	end
 
+	def extract_neighbour_basics( nhbrs )
+		nhbrs.map { |n| 
+			{
+				:name       => n.name,
+				:latitude   => n.latitude,
+				:longitude  => n.longitude,
+				:updated_at => n.updated_at
+			}
+		 }
+	end
+
 	def lookup_neighbours( params )
 		now = Time.now
 		atoken_response = validate_token( params[:atoken] )
@@ -226,34 +237,28 @@ helpers do
 					}
 				else
 					nhbrs = Neighbour.all(
-						:latitude.gte  => latitude  - radius,
-						:latitude.lte  => latitude  + radius,
-						:longitude.gte => longitude - radius,
-						:longitude.lte => longitude + radius,
-						:id.not        => atoken_response[:data][:neighbour].id
+							:latitude.gte  => latitude  - radius,
+							:latitude.lte  => latitude  + radius,
+							:longitude.gte => longitude - radius,
+							:longitude.lte => longitude + radius,
+							:id.not        => nhbr.id
 						)
-			
+
+					nhbrs_basics = extract_neighbour_basics( nhbrs )
 					# and another pass thru the list of neighbours to ensure we are actually within the radius (and not in the corners of the bounding square)
-					nhbrs.keep_if { |n|
-						distance_in_miles = Geocoder::Calculations.distance_between( [n['latitude'], n['longitude']], [latitude, longitude] )
+					nhbrs_basics.keep_if { |n|
+						distance_in_miles = Geocoder::Calculations.distance_between( [n[:latitude], n[:longitude]], [latitude, longitude] )
+						n[:distance] = distance_in_miles # possibly naughty, but modifies the nhbr
 						distance_in_miles <= radius
 					}
+					# sort by distance, closest first
+					nhbrs_basics.sort! { |x,y| y[:distance] <=> x[:distance] }
 				end
 			else # this is causing code awkwardness. should it be allowed?
-				nhbrs = Neighbour.all()
+				nhbrs_basics = extract_neighbour_basics( Neighbour.all() )
 			end
 	
 			if response.nil?
-				# extract only the subset of data from each nhbr for return
-				nhbrs_basics = nhbrs.map { |n| 
-					{
-						:name       => n.name,
-						:latitude   => n.latitude,
-						:longitude  => n.longitude,
-						:updated_at => n.updated_at
-					}
-				 }
-		
 				response = { 
 					'status' => 'success',
 					'data' => {'neighbours' => nhbrs_basics} 
@@ -438,7 +443,7 @@ get '/web/neighbours' do
 		erb :neighbours, 
 			:locals => {
 				:atoken     => params['atoken'], 
-				:radius     => "1",
+				:radius     => 1.0,
 				:latitude   => params['latitude']  || 0.0,
 				:longitude  => params['longitude'] || 0.0,
 				:neighbours => api_response['data']['neighbours']

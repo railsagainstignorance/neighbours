@@ -1,9 +1,12 @@
 require_relative 'spec_helper'
 
 def assert_neighbours_within_radius( neighbours, radius, latitude, longitude)
-		neighbours.each do |n|
-		distance_in_miles = Geocoder::Calculations.distance_between( [n['latitude'], n['longitude']], [latitude, longitude] )
-		assert( distance_in_miles <= radius, "distance_in_miles (#{distance_in_miles.to_s}) > radius(#{radius}); n.latitude=#{n['latitude']}, n.longitude=#{n['longitude']}, latitude=#{latitude}, longitude=#{longitude}; n=#{n.to_s}")
+	assert neighbours.count > 0, "expected neighbours.count to be > 0"
+	from_coords = [latitude, longitude]
+	neighbours.each do |n|
+		nhbr_coords = [n['latitude'], n['longitude']]
+		distance_in_miles = Geocoder::Calculations.distance_between( from_coords, nhbr_coords )
+		assert( distance_in_miles <= radius, "distance_in_miles (#{distance_in_miles.to_s}) > radius(#{radius}); \nfrom_coords=#{from_coords.to_s}, \nnhbr_coords=#{nhbr_coords.to_s}; \nn=#{n.to_s}")
 	end
 	return true
 end
@@ -100,7 +103,15 @@ describe "Neighbours" do
 			:longitude => longitude,
 			:atoken    => atoken
 		neighbours = assert_success_and_get_parsed_data_field( last_response, 'neighbours', Array )
+		assert_neighbours_within_radius( neighbours, radius, latitude, longitude)
 		neighbours.count.must_equal num
+		nhbr_fields = ['name', 'latitude', 'longitude', 'updated_at', 'distance']
+		neighbours.each do |n|
+			n.size.must_equal nhbr_fields.count
+			nhbr_fields.each do |f|
+				n.must_include f			
+			end
+		end
 
 		assert_neighbours_within_radius( neighbours, radius, latitude, longitude)
 
@@ -184,6 +195,7 @@ describe "Neighbours" do
 			:longitude => nearby_coords.last,
 			:atoken    => atokens.first
 		neighbours = assert_success_and_get_parsed_data_field( last_response, 'neighbours', Array )
+		assert_neighbours_within_radius( neighbours, nearby_radius, nearby_coords.first, nearby_coords.last)
 		neighbours.count.must_equal 1
 
 		# recheck the second instance at its original location
@@ -193,6 +205,7 @@ describe "Neighbours" do
 			:longitude => coords.last.last,
 			:atoken    => atokens.last
 		neighbours = assert_success_and_get_parsed_data_field( last_response, 'neighbours', Array )
+		assert_neighbours_within_radius( neighbours, nearby_radius, coords.last.first, coords.last.last)
 		neighbours.count.must_equal 1
 	end
 
