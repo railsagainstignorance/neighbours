@@ -197,6 +197,121 @@ helpers do
 		return response
 	end
 
+	def lookup_neighbours( params )
+		now = Time.now
+		atoken_response = validate_token( params[:atoken] )
+	
+		if atoken_response[:status] != 'success'
+			response = atoken_response
+		else
+			# get the nhbrs
+			if params.include?('latitude') and params.include?('longitude') and params.include?('radius')
+	
+				latitude  = params['latitude'].to_f
+				longitude = params['longitude'].to_f
+				radius    = params['radius'].to_f
+		
+				# update the location of this instance
+				nhbr = atoken_response[:data][:neighbour]
+				update_ok = nhbr.update(
+					:latitude   => latitude,
+					:longitude  => longitude,
+					:updated_at => now
+					)
+	
+				if !update_ok
+					response = { 
+						:status  => 'error',
+						:message => 'failed to update location' 
+					}
+				else
+					nhbrs = Neighbour.all(
+						:latitude.gte  => latitude  - radius,
+						:latitude.lte  => latitude  + radius,
+						:longitude.gte => longitude - radius,
+						:longitude.lte => longitude + radius,
+						:id.not        => atoken_response[:data][:neighbour].id
+						)
+			
+					# and another pass thru the list of neighbours to ensure we are actually within the radius (and not in the corners of the bounding square)
+					nhbrs.keep_if { |n|
+						distance_in_miles = Geocoder::Calculations.distance_between( [n['latitude'], n['longitude']], [latitude, longitude] )
+						distance_in_miles <= radius
+					}
+				end
+			else # this is causing code awkwardness. should it be allowed?
+				nhbrs = Neighbour.all()
+			end
+	
+			if response.nil?
+				# extract only the subset of data from each nhbr for return
+				nhbrs_basics = nhbrs.map { |n| 
+					{
+						:name       => n.name,
+						:latitude   => n.latitude,
+						:longitude  => n.longitude,
+						:updated_at => n.updated_at
+					}
+				 }
+		
+				response = { 
+					'status' => 'success',
+					'data' => {'neighbours' => nhbrs_basics} 
+				}
+			end
+		end
+
+		return response
+	end
+
+	def add_random_neighbours( params )
+		atoken_response = validate_token( params[:atoken] )
+	
+		if atoken_response[:status] != 'success'
+			response = atoken_response
+		else
+			num       = (params[:num]       || 3  ).to_i
+			radius    = (params[:radius]    || 1  ).to_f # miles
+			latitude  = (params[:latitude]  || 0.0).to_f
+			longitude = (params[:longitude] || 0.0).to_f
+		
+			now          = Time.now
+			before_count = Neighbour.count
+			responses    = []
+		
+			num.times do |i|
+				new_latitude, new_longitude = 
+					Geocoder::Calculations.random_point_near([latitude, longitude], radius)
+				
+				random_params = {
+					:latitude  => new_latitude,
+					:longitude => new_longitude,
+					:name      => "neighbour #{now.to_f}, #{i} of #{num}",
+					:email     => SecureRandom.hex(10) + '@madeupdomain.com'
+				}
+		
+				registration = register_new_neighbour( random_params )
+				responses << registration[:response]
+			end
+		
+			after_count = Neighbour.count
+			num_added   = after_count - before_count
+		
+			if num_added == num
+				response = { 
+					:status => 'success',
+					:data   => {:num_added => num_added} 
+				}
+			else
+				response = { 
+					:status => 'fail',
+					:data   => {:message => "only added #{num_added} out of #{num}: responses=#{responses.to_s}"} 
+				}
+			end
+		end
+		return response
+	end
+
 	# display-related helpers
 
 	# If @title is assigned, add it to the page's title.
@@ -245,71 +360,7 @@ end
 get '/neighbours' do
 	content_type :json, 'charset' => 'utf-8'
 	logger.info "/neighbours: params=#{params.to_s}"
-
-	now = Time.now
-
-	atoken_response = validate_token( params[:atoken] )
-
-	if atoken_response[:status] != 'success'
-		response = atoken_response
-	else
-		# get the nhbrs
-		if params.include?('latitude') and params.include?('longitude') and params.include?('radius')
-
-			latitude  = params['latitude'].to_f
-			longitude = params['longitude'].to_f
-			radius    = params['radius'].to_f
-	
-			# update the location of this instance
-			nhbr = atoken_response[:data][:neighbour]
-			update_ok = nhbr.update(
-				:latitude   => latitude,
-				:longitude  => longitude,
-				:updated_at => now
-				)
-
-			if !update_ok
-				response = { 
-					:status  => 'error',
-					:message => 'failed to update location' 
-				}
-			else
-				nhbrs = Neighbour.all(
-					:latitude.gte  => latitude  - radius,
-					:latitude.lte  => latitude  + radius,
-					:longitude.gte => longitude - radius,
-					:longitude.lte => longitude + radius,
-					:id.not        => atoken_response[:data][:neighbour].id
-					)
-		
-				# and another pass thru the list of neighbours to ensure we are actually within the radius (and not in the corners of the bounding square)
-				nhbrs.keep_if { |n|
-					distance_in_miles = Geocoder::Calculations.distance_between( [n['latitude'], n['longitude']], [latitude, longitude] )
-					distance_in_miles <= radius
-				}
-			end
-		else # this is causing code awkwardness. should it be allowed?
-			nhbrs = Neighbour.all()
-		end
-
-		if response.nil?
-			# extract only the subset of data from each nhbr for return
-			nhbrs_basics = nhbrs.map { |n| 
-				{
-					:name       => n.name,
-					:latitude   => n.latitude,
-					:longitude  => n.longitude,
-					:updated_at => n.updated_at
-				}
-			 }
-	
-			response = { 
-				'status' => 'success',
-				'data' => {'neighbours' => nhbrs_basics} 
-			}
-		end
-	end
-
+	response = lookup_neighbours( params )
 	return response.to_json
 end
 
@@ -319,52 +370,7 @@ end
 
 get '/add_random_neighbours' do
 	content_type :json, 'charset' => 'utf-8'
-
-	atoken_response = validate_token( params[:atoken] )
-
-	if atoken_response[:status] != 'success'
-		response = atoken_response
-	else
-		num       = (params[:num]       || 3  ).to_i
-		radius    = (params[:radius]    || 1  ).to_f # miles
-		latitude  = (params[:latitude]  || 0.0).to_f
-		longitude = (params[:longitude] || 0.0).to_f
-	
-		now          = Time.now
-		before_count = Neighbour.count
-		responses    = []
-	
-		num.times do |i|
-			new_latitude, new_longitude = 
-				Geocoder::Calculations.random_point_near([latitude, longitude], radius)
-			
-			random_params = {
-				:latitude  => new_latitude,
-				:longitude => new_longitude,
-				:name      => "neighbour #{now.to_f}, #{i} of #{num}",
-				:email     => SecureRandom.hex(10) + '@madeupdomain.com'
-			}
-	
-			registration = register_new_neighbour( random_params )
-			responses << registration[:response]
-		end
-	
-		after_count = Neighbour.count
-		num_added   = after_count - before_count
-	
-		if num_added == num
-			response = { 
-				:status => 'success',
-				:data   => {:num_added => num_added} 
-			}
-		else
-			response = { 
-				:status => 'fail',
-				:data   => {:message => "only added #{num_added} out of #{num}: responses=#{responses.to_s}"} 
-			}
-		end
-	end
-
+	response = add_random_neighbours( params )
 	return response.to_json
 end
 
@@ -405,8 +411,8 @@ end
 
 put '/web/do_register' do
 	# "reached put '/web/do_register'"
-	api_response_json = RestClient.put 'http://localhost:4567/register', params
-	api_response = JSON.parse(api_response_json)
+	registration = register_new_neighbour( params )
+	api_response = registration[:response]
 
 	if api_response['status'] == 'fail'
 		redirect to("/web/register?msg=#{URI.escape(api_response['data']['message'])}")
@@ -420,27 +426,21 @@ put '/web/do_register' do
 	end
 end
 
-
 get '/web/neighbours' do
 	# check params, do registration, obtain atoken
-	api_response_json = RestClient.get 'http://localhost:4567/neighbours', params
-	api_response = JSON.parse(api_response_json)
-
-	halt 200, api_response.to_s + params.to_s
+	api_response = lookup_neighbours( params )
 
 	if api_response['status'] == 'fail'
 		redirect to("/web/register?msg=#{URI.escape(api_response['data']['message'])}")
 	elsif api_response['status'] == 'error'
 		redirect to("/web/register?msg=#{URI.escape(api_response['message'])}")
 	else
-		#erb :neighbours, 
-		#	:locals => {
-		#		:atoken     => params['atoken'], 
-		#		:radius     => "1",
-		#		:latitude   => params['latitude']  || 0.0,
-		#		:longitude  => params['longitude'] || 0.0
-		#	}
-
-		params.to_s
+		erb :neighbours, 
+			:locals => {
+				:atoken     => params['atoken'], 
+				:radius     => "1",
+				:latitude   => params['latitude']  || 0.0,
+				:longitude  => params['longitude'] || 0.0
+			}
 	end
 end
