@@ -1,4 +1,4 @@
-<h2>neighbours</h2>
+<h1>neighbours</h1>
 
 <div id="neighbour_form">
   <form action="/web/neighbours" method="get">
@@ -8,4 +8,15 @@
 	<input type="hidden" name="atoken" value="<%= atoken %>">
     <input type="submit" value="Neighbours!">
   </form>
+</div>
+
+<div id="neighbours">
+	<h2 id="neighbours-list-heading">all the lovely lovely neighbours</h2>
+	<% if neighbours.count > 0 %>
+		<ul id="neighbours-list">
+		<%= neighbours.map {|n| "<li> \"<B>#{n[:name]}</B>\" at [#{n[:latitude]},#{n[:longitude]}] on #{n[:updated_at]}"}.join("\n") %>
+		</ul>
+	<% else %>
+		and then there were none...
+	<% end %>
 </div>
