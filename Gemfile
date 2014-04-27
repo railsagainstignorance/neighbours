@@ -9,6 +9,8 @@ gem "geocoder"
 gem 'sinatra-docdsl'
 gem 'rest-client'
 
+gem 'nokogiri'
+
 group :test do
 	gem "rack-test"
 end

@@ -13,6 +13,9 @@ require 'rest_client'
 require 'uri'
 require 'logger'
 
+require 'nokogiri'
+require 'open-uri'
+
 configure :test do
 	DataMapper.setup( :default, "sqlite3::memory:" )
 end

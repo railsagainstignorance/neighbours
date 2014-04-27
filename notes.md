@@ -221,4 +221,23 @@ ToDo
 
 - adding put /do_register
    + needed to use the shimmy: <input type="hidden" name="_method" value="put" /> and form action="post"
-   
+
+## 27/04/2013
+- acceptace tests... 
+   + using capybara: http://www.simontaranto.com/2013/10/18/testing-sinatra-apps-with-capybara-and-minitest.html
+
+- Sinatra: modular vs classic: http://www.sinatrarb.com/intro.html#Modular%20vs.%20Classic%20Style
+
+- Sinatra setup: 
+   + http://blog.sourcing.io/structuring-sinatra
+   + http://mayerdan.com/ruby/2013/08/20/fast-prototyping-with-sinatra/
+
+- twitter bootstrap
+   + https://github.com/bootstrap-ruby/sinatra-bootstrap
+
+- RVM? http://tech.pro/tutorial/1303/bootstrap-your-web-application-with-ruby--sinatra
+
+- parsing HTML for acceptance tests
+   + added nokogiri gem
+   + added spec/neighbours_web_spec.rb
+   + using nokgiri: http://ruby.bastardsbook.com/chapters/html-parsing/
