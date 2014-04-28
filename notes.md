@@ -300,3 +300,13 @@ work
 $ heroku accounts:set personal # or work
 
 - added Profile and config.ru
+- added/uncommented postgres and :production
+
+- still not running on heroku
+   + missing DB URL (not visible via heroku configs)
+
+- created new app
+   + heroku apps:destroy --app prev_app
+   + heroku app:create
+   + heroku accounts:default personal
+   + git push heroku master
