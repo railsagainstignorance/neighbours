@@ -28,9 +28,9 @@ configure :development do
 	DataMapper.setup( :default, "sqlite3://#{Dir.pwd}/neighbours.db" )
 end
 
-# configure :production do
-#	 DataMapper.setup( :default, ENV['DATABASE_URL'] )
-# end
+configure :production do
+	DataMapper.setup( :default, ENV['DATABASE_URL'] )
+end
 
 Geocoder.configure( ) # default=:mi, but might want to specify :units => :km 
 
