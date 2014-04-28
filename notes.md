@@ -254,3 +254,49 @@ ToDo
 - not done /web/re-register
 
 - maybe require atoken *and name*
+
+## 28/04/2014
+
+- trying to push to heroku. trouble with multiple accounts (work and personal)
+   + http://stackoverflow.com/questions/20586992/your-account-someoneelsegmail-com-does-not-have-access-to-app-name
+   + http://martyhaught.com/articles/2010/12/14/managing-multiple-heroku-accounts/
+   + heroku plugins:install git://github.com/ddollar/heroku-accounts.git
+
+$ heroku accounts:add personal
+Enter your Heroku credentials.
+Email: xxxxx@xxxx.com
+Password (typing will be hidden):
+
+Add the following to your ~/.ssh/config
+
+Host heroku.personal
+  HostName heroku.com
+  IdentityFile /PATH/TO/PRIVATE/KEY
+  IdentitiesOnly yes
+
+$ heroku accounts:add work --auto
+Enter your Heroku credentials.
+Email: xxxx.xxxx@xxxx.com
+Password (typing will be hidden):
+Generating new SSH key
+Generating public/private rsa key pair.
+Your identification has been saved in c:/Users/lenovo/.ssh/identity.heroku.work.
+Your public key has been saved in c:/Users/lenovo/.ssh/identity.heroku.work.pub.
+The key fingerprint is:
+xxxxx
+Adding entry to ~/.ssh/config
+Adding public key to Heroku account: xxxx.xxxx@xxxx.com
+
+$ heroku accounts
+work
+personal
+
+$ heroku accounts:default personal
+
+$ heroku accounts
+work
+* personal
+
+$ heroku accounts:set personal # or work
+
+- added Profile and config.ru
