@@ -19,8 +19,8 @@ function output (label, input) {
 var   c = document.querySelector("#canvas"),
 	ctx = c.getContext("2d");
 
-c.width  = 500; //window.innerWidth;
-c.height = 500; //window.innerHeight;
+c.width  = window.innerWidth * 0.95; //500; //window.innerWidth;
+c.height = window.innerHeight* 0.95; //500; //window.innerHeight;
 c.addEventListener("touchmove", function (e) { e.preventDefault(); }, false);
 	
 var canvas = oCanvas.create({ canvas: "#canvas", background: "#222" });
