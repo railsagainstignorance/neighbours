@@ -361,6 +361,20 @@ helpers do
 	def pretty_date(time)
 		time.strftime("%d %b %Y")
 	end
+
+	# from http://www.sitepoint.com/using-sinatra-helpers-to-clean-up-your-code/
+	# include this in the layout file: <%= javascripts %>
+	# add extra non-standard js in the route: @js = ["custom.js","sorter.js","colorpicker.js"]
+
+	set :javascripts, [] # default list of js for all web pages is empty for now
+
+	def javascripts *scripts
+    	javascripts = (@js ? @js + settings.javascripts + scripts : settings.javascripts + scripts).uniq
+    	
+    	javascripts.map { |script|
+    		"<script src=\"/#{script}\"></script>"
+    	}.join
+	end
 end
 
 documentation 'Hello? Is this thing on?' do
@@ -476,6 +490,7 @@ put '/web/do_register' do
 end
 
 get '/web/neighbours' do
+	@js = ['js/ocanvas-2.7.1.min.js', 'js/satellites.js']
 	# check params, do registration, obtain atoken
 	api_response = lookup_neighbours( params )
 
