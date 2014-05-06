@@ -490,7 +490,7 @@ put '/web/do_register' do
 end
 
 get '/web/neighbours' do
-	@js = ['js/ocanvas-2.7.1.min.js', 'js/satellites.js']
+	@js = ['js/ocanvas-2.7.1.min.js', 'js/satellites.js', 'js/geolocation.js']
 	# check params, do registration, obtain atoken
 	api_response = lookup_neighbours( params )
 

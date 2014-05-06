@@ -310,3 +310,31 @@ $ heroku accounts:set personal # or work
    + heroku app:create
    + heroku accounts:default personal
    + git push heroku master
+
+05/05/2014 20:49
+
+- to attach a new/missing free Postgres instance for a heroku app
+   + https://devcenter.heroku.com/articles/heroku-postgresql
+   + $ heroku addons:add heroku-postgresql:dev
+
+todo
+- add some JS loveliness to the display
+   + initially just some JS to draw a dynamic graph
+   + then make it plot the neighbours
+      + pondering http://ocanvas.org/
+            + especially the satellite example
+   + keep an eye on these for later: 
+      + http://chapter31.com/2006/12/07/including-js-files-from-within-js-files/ 
+      + http://www.sitepoint.com/using-sinatra-helpers-to-clean-up-your-code/
+   + DONE
+- display the actual neighbours (keeping them as satallites with satellites for now... ;-)
+   + use log(radius)
+      + so that remote neighbours at least show up
+      + could it display *all* neighbours?
+         + nighbours at opposite end of world would flicker about the periphery.
+
+06/05/2014 19:18
+- https://github.com/railsagainstignorance/neighbours
+
+todo
+- get coords from browser using JS
