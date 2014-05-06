@@ -20,7 +20,6 @@ function showPosition(position){
 '	<input type="hidden" name="latitude"  value="' + position.coords.latitude + '">' +
 '	<input type="hidden" name="longitude" value="' + position.coords.longitude + '">' +
 '	<input type="hidden" name="radius" value="100">' +
-' 	<input type="hidden" name="atoken" value="PxGk1bCz_DATFExTWulWaw">' +
 '   <input type="submit" value="Find My Geolocated Neighbours!">' +
 '  </form>' +
 '</div>'; 

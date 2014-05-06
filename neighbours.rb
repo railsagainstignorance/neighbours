@@ -16,8 +16,11 @@ require 'logger'
 require 'nokogiri'
 require 'open-uri'
 
+#require "sinatra/cookies"
+
 configure do
 	set :default_radius, 1.0
+	set :atoken_cookie_name, "ATOKEN"
 end
 
 configure :test do
@@ -215,9 +218,9 @@ helpers do
 		nhbrs.map { |n| extract_neighbour_basics(n) }
 	end
 
-	def lookup_neighbours( params )
+	def lookup_neighbours( params, atoken_cookie=nil )
 		now = Time.now
-		atoken_response = validate_token( params[:atoken] )
+		atoken_response = validate_token( atoken_cookie || params[:atoken] )
 	
 		if atoken_response[:status] != 'success'
 			response = atoken_response
@@ -485,14 +488,23 @@ put '/web/do_register' do
 		atoken    = api_response['data']['atoken']
 		latitude  = params['latitude']
 		longitude = params['longitude']
-		redirect to("/web/neighbours?atoken=#{URI.escape(atoken)}&latitude=#{URI.escape(latitude)}&longitude=#{URI.escape(longitude)}&radius=#{settings.default_radius}")
+
+		response.set_cookie(
+			settings.atoken_cookie_name, 
+			:value => atoken,
+			:domain => nil,
+            :expires => Time.now + 3600*24*7)
+
+		redirect to("/web/neighbours?latitude=#{URI.escape(latitude)}&longitude=#{URI.escape(longitude)}&radius=#{settings.default_radius}")
 	end
 end
 
 get '/web/neighbours' do
 	@js = ['js/ocanvas-2.7.1.min.js', 'js/satellites.js', 'js/geolocation.js']
+	
+	atoken_cookie = request.cookies[settings.atoken_cookie_name]
 	# check params, do registration, obtain atoken
-	api_response = lookup_neighbours( params )
+	api_response = lookup_neighbours( params, atoken_cookie )
 
 	if api_response[:status] == 'fail'
 		message = api_response[:data][:message] || "no message"

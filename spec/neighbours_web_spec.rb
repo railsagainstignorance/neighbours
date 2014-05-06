@@ -46,6 +46,6 @@ describe "NeighboursViaWeb" do
 		page = Nokogiri::HTML( last_response.body )
 	
 		# very basic check to see if the page contains an entry for the /register route
-		page.css('div#neighbour_form')[0].wont_be_nil
+		page.css('div#neighbour-form')[0].wont_be_nil
 	end
 end
