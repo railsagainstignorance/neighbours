@@ -341,10 +341,16 @@ todo
 - get coords from browser using JS. DONE
    + http://www.w3schools.com/html/html5_geolocation.asp
 
-- put atoken in cookie (from register page) and retrieve it (from neighbours page)
+- put atoken in cookie (from register page) and retrieve it (from neighbours page). DONE
    + http://www.quirksmode.org/js/cookies.html
    + http://www.sinatrarb.com/contrib/cookies.html (no. http://stackoverflow.com/questions/5078091/sinatra-response-set-cookie-doesnt-work, http://sinatra-book.gittr.com/#cookies)
    + http://craig-russell.co.uk/2013/01/31/persistent-cookies-sinatra.html#.U2k8_fldVIE
    + set cookie name via: http://stackoverflow.com/questions/4525482/in-sinatraruby-how-should-i-create-global-variables-which-are-assigned-values
    + Q: how to test for cookies using Minitest?
    + Minitest Insights with Ryan Davis: http://vimeo.com/75833835 ?
+
+08/05/2014 21:57
+- get compass direction from browser using JS
+   + printing longitude, accuracy, altitude, altitudeAccuracy, heading, speed
+   + sadly, all null in laptop browser, except accuracy=140000 (no idea what the unts are)
+   + could also use watchPosition

@@ -14,7 +14,15 @@ function getLocation(){
 }
 
 function showPosition(position){
-	x.innerHTML = '<P>Browser says: [lat, long]=[ ' + position.coords.latitude + ', ' + position.coords.longitude + ' ]</P>' + 
+	var coords = position.coords
+	x.innerHTML = '<P>Browser says: <UL>' + 
+'<LI>[lat, long]=[ ' + coords.latitude + ', ' + coords.longitude + ' ]' + 
+'<LI>accuracy=' + coords.accuracy + 
+'<LI>altitude=' + coords.altitude + 
+'<LI>altitudeAccuracy=' + coords.altitudeAccuracy + 
+'<LI>heading=' + coords.heading + 
+'<LI>speed=' + coords.speed + 
+'</UL></P>' + 
 '<div id="neighbour-form-browser-geolocation">' + 
 '  <form action="/web/neighbours" method="get">' + 
 '	<input type="hidden" name="latitude"  value="' + position.coords.latitude + '">' +
