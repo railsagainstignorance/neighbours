@@ -5,7 +5,7 @@
 
 var x = document.getElementById("geolocation-status");
 function getLocation(){
-	if (navigator.geolocation){
+	if (navigator && navigator.geolocation){
 		navigator.geolocation.getCurrentPosition(showPosition, showError);
 	}
 	else{

@@ -354,3 +354,21 @@ todo
    + printing longitude, accuracy, altitude, altitudeAccuracy, heading, speed
    + sadly, all null in laptop browser, except accuracy=140000 (no idea what the unts are)
    + could also use watchPosition
+   + geolocation js does not seem to be firing when on android phone
+      + but the satellite.js stuff does
+      + perhaps https://developers.google.com/chrome-developer-tools/docs/remote-debugging
+      + can prefix url with view-source: in chrome in phone
+
+- now setting up to debug android remotely
+   + http://developer.android.com/sdk/index.html?hl=sk#download
+   + http://developer.android.com/sdk/installing/bundle.html
+   + trying http://androidsecurity.wordpress.com/2013/06/05/install-google-nexus-4-adb-usb-drivers-on-windows-android-studio/
+      + started SDK Manager, installing everything
+      + and lo, the usb_driver appears: C:\Users\lenovo\installs\adt-bundle-windows-x86_64-20140321\adt-bundle-windows-x86_64-20140321\sdk\extras\google\usb_driver
+      + plugged in nexus 4 and installed driver (via browse)
+      + chrome:inspect (in browser)
+
+- debugging why geolocation.js is not working
+   + possibly because navigator is "undefined"
+   + trying http://html5demos.com/geo
+      + works on desktop, hangs on n4
