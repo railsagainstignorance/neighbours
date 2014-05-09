@@ -372,3 +372,8 @@ todo
    + possibly because navigator is "undefined"
    + trying http://html5demos.com/geo
       + works on desktop, hangs on n4
+   + tried to check for navigator object being defined, still not work.
+
+09/05/2014
+
+- trying prepending <!DOCTYPE html> to layout
