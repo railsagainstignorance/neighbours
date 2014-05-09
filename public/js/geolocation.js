@@ -4,7 +4,6 @@
 // http://www.w3schools.com/html/html5_geolocation.asp
 
 var x = document.getElementById("geolocation-status");
-var y = document.getElementById("geolocation-status-2");
 
 function getLocation(){
 	if (typeof navigator == "undefined") {
@@ -14,10 +13,8 @@ function getLocation(){
 	} else if (! 'getCurrentPosition' in navigator.geolocation ){
 		x.innerHTML = "Browser says: navigator.geolocation.getCurrentPosition is not supported.";
 	} else {
-		navigator.geolocation.getCurrentPosition(showPosition, showError);	
+		navigator.geolocation.getCurrentPosition(showPosition, showError, {timeout:3000});	
 	}
-
-	y.innerHTML = "testing second geolocation-status div"
 }
 
 function showPosition(position){
