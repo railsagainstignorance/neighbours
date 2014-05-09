@@ -4,12 +4,16 @@
 // http://www.w3schools.com/html/html5_geolocation.asp
 
 var x = document.getElementById("geolocation-status");
+
 function getLocation(){
-	if (navigator && navigator.geolocation){
-		navigator.geolocation.getCurrentPosition(showPosition, showError);
-	}
-	else{
-		x.innerHTML = "Browser says: Geolocation is not supported.";
+	if (typeof navigator == "undefined") {
+		x.innerHTML = "Browser says: navigator is not defined.";
+	} else if (! 'geolocation' in navigator ){
+		x.innerHTML = "Browser says: navigator.geolocation is not supported.";
+	} else if (! 'getCurrentPosition' in navigator.geolocation ){
+		x.innerHTML = "Browser says: navigator.geolocation.getCurrentPosition is not supported.";
+	} else {
+		navigator.geolocation.getCurrentPosition(showPosition, showError);	
 	}
 }
 
