@@ -4,6 +4,7 @@
 // http://www.w3schools.com/html/html5_geolocation.asp
 
 var x = document.getElementById("geolocation-status");
+var y = document.getElementById("geolocation-status-2");
 
 function getLocation(){
 	if (typeof navigator == "undefined") {
@@ -15,6 +16,8 @@ function getLocation(){
 	} else {
 		navigator.geolocation.getCurrentPosition(showPosition, showError);	
 	}
+
+	y.innerHTML = "testing second geolocation-status div"
 }
 
 function showPosition(position){
