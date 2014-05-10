@@ -1,5 +1,13 @@
-var hw = function(){
- return "hello world";
-};
+var RADAR = (function () {
+	
+	var hw = function(){
+		return "hello world";
+	};
 
-exports.hw = hw;
+	return {
+		hw: hw
+	};
+
+}());
+
+exports.RADAR = RADAR;

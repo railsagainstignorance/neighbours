@@ -459,3 +459,25 @@ ToDo
 ToDo
 - sort out idiom for writing radar.js
    + exports?
+   + http://www.adequatelygood.com/JavaScript-Module-Pattern-In-Depth.html
+      Module Export
+      
+      Sometimes you don’t just want to use globals, but you want to declare them. We can easily do this by exporting them, using the anonymous function’s return value. Doing so will complete the basic module pattern, so here’s a complete example:
+      
+      var MODULE = (function () {
+         var my = {},
+            privateVariable = 1;
+      
+         function privateMethod() {
+            // ...
+         }
+      
+         my.moduleProperty = 1;
+         my.moduleMethod = function () {
+            // ...
+         };
+      
+         return my;
+      }());
+      Notice that we’ve declared a global module named MODULE, with two public properties: a method named MODULE.moduleMethod and a variable named MODULE.moduleProperty. In addition, it maintains private internal state using the closure of the anonymous function. Also, we can easily import needed globals, using the pattern we learned above.
+   
