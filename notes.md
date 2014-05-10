@@ -377,3 +377,85 @@ todo
 09/05/2014
 
 - trying prepending <!DOCTYPE html> to layout
+   + nope.
+- added assorted debugging, rephrasing of existence checks
+- added timeout: {timeout:3000} to getCurrentPosition
+   + now appears in phone browser. yay!
+
+- lots of online complaints about geolocation on Android
+   + one suggestion is to use http://cordova.apache.org/
+
+- from http://www.movable-type.co.uk/scripts/latlong.html
+   + for distance from lat1,lon1 to lat2,lon2
+      + var φ1 = lat1.toRadians(), φ2 = lat2.toRadians(), Δλ = (lon2-lon1).toRadians(), R = 6371; // gives d in km
+      + var dist = Math.acos( Math.sin(φ1)*Math.sin(φ2) + Math.cos(φ1)*Math.cos(φ2) * Math.cos(Δλ) ) * R;
+   + for bearing from φ1,λ1 to φ2,λ2
+      + var y = Math.sin(λ2-λ1) * Math.cos(φ2);
+      + var x = Math.cos(φ1)*Math.sin(φ2) - Math.sin(φ1)*Math.cos(φ2)*Math.cos(λ2-λ1);
+      + var brng = Math.atan2(y, x).toDegrees();
+   + Equirectangular approximation
+      + If performance is an issue and accuracy less important, for small distances Pythagoras’ theorem can be used on an equirectangular projection:*
+      + var x = (λ2-λ1) * Math.cos((φ1+φ2)/2);
+      + var y = (φ2-φ1);
+      + var d = Math.sqrt(x*x + y*y) * R;
+   + also
+      + from http://stackoverflow.com/questions/27928/how-do-i-calculate-distance-between-two-latitude-longitude-points
+      + function getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2) {
+      +  var R = 6371; // Radius of the earth in km
+      +  var dLat = deg2rad(lat2-lat1);  // deg2rad below
+      +  var dLon = deg2rad(lon2-lon1); 
+      +  var a = 
+      +    Math.sin(dLat/2) * Math.sin(dLat/2) +
+      +    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+      +    Math.sin(dLon/2) * Math.sin(dLon/2)
+      +    ; 
+      +  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+      +  var d = R * c; // Distance in km
+      +  return d;
+      +}
+      +
+      +function deg2rad(deg) {
+      +  return deg * (Math.PI/180)
+      +}  
+   + also from https://developers.google.com/maps/documentation/javascript/libraries
+      + and https://developers.google.com/maps/documentation/javascript/geometry
+      + include https://maps.googleapis.com/maps/api/js?libraries=geometry&sensor=true_or_false
+      + google.maps.geometry.spherical.computeDistanceBetween()
+      + google.maps.geometry.spherical.computeHeading()
+         +  passing it two from and to LatLng objects, https://developers.google.com/maps/documentation/javascript/reference?csw=1#LatLng
+
+ToDo
+- create JS-driven display
+   + expose current lat/long etc
+   + request neighbours via API
+   + calc dist,bearing to each (from current lat/long)
+   + scale radius=log(dist), size=bigger when closer
+   + plot on canvas
+   + auto-update if moves
+
+10/05/2014 19:51
+- contemplating TDD JS dev
+   + "JavaScript Testing with Grunt, Mocha and Chai", https://gist.github.com/maicki/7781943
+   + "JavaScript TDD with Jasmine and Karma", http://kroltech.com/2013/11/javascript-tdd-with-jasmine-and-karma/
+   + "Setting Up Continuous Testing with Grunt and Mocha", http://comp-phil.blogspot.co.uk/2014/02/setting-up-continuous-testing-with.html
+      + installing node, http://comp-phil.blogspot.co.uk/2013/11/introduction-to-nodejs-and-mocha.html
+         + c:/installs/nodejs
+            + check, $ node, console.log("hello w");, got "hello w"
+         + $ npm install -g mocha, done
+         + mkdir spec/js; touch spec/js/radarSpec.js
+            + requires public/js/radar.js (does not exist yet)
+         + mocha spec/js
+            + barfs
+         + touch public/js/radar.js
+         + mocha spec/js
+            + ok
+         + npm install should
+            + add require should to radarSpec
+            + added first test to radarSpec
+         + $  mocha --watch spec/js
+            + 1 failing. wahay!
+         + added first hw code to radar.js
+            + 1 passing. wahay!
+ToDo
+- sort out idiom for writing radar.js
+   + exports?
