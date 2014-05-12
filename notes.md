@@ -480,4 +480,21 @@ ToDo
          return my;
       }());
       Notice that we’ve declared a global module named MODULE, with two public properties: a method named MODULE.moduleMethod and a variable named MODULE.moduleProperty. In addition, it maintains private internal state using the closure of the anonymous function. Also, we can easily import needed globals, using the pattern we learned above.
-   
+- sort out stubbing of call to API
+   + http://sinonjs.org/
+   + handling asynchronous tests?
+      + http://visionmedia.github.io/mocha/#asynchronous-code
+
+11/05/2014
+- promises: http://domenic.me/2012/10/14/youre-missing-the-point-of-promises/
+- to TDD on async calls, break apart calls into testable pieces
+
+- refactor radar.js to be just the core functions, with no document dependency
+- testing asymc JS: http://martinfowler.com/articles/asyncJS.html
+
+12/05/2014
+- still running $ mocha --watch spec/js
+- created mocha tests for convertNeighboursToPolar
+
+ToDo
+- convertNeighboursToPolar should(?) to return original neighbours elements with added radius/bearing, in order to retain name, date, etc
