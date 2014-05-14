@@ -26,8 +26,14 @@
 	<% end %>
 </div>
 
-<div id="fancy-display">
-	<span class="label-output">Output</span>
-	<pre id="output"></pre>
-	<canvas id="canvas" width="50" height="50"></canvas>
-</div>
+<% if radar == 0 %>
+	<div id="fancy-display">
+		<span class="label-output">Output</span>
+		<pre id="output"></pre>
+		<canvas id="canvas" width="50" height="50"></canvas>
+	</div>
+<% else %>
+	<div id="radar">
+		<canvas id="canvas" width="50" height="50"></canvas>
+	</div>
+<% end %>

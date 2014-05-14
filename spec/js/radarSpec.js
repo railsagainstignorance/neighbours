@@ -7,7 +7,7 @@ describe("radar will say 'hello world' when you invoke the hw function", functio
 	});
 });
 
-describe("radar will say process a list of neighbours.", function(){
+describe("radar will process a list of neighbours.", function(){
 	var neighbours_response = {
 			status: "success",
 			data: {

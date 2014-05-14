@@ -500,8 +500,14 @@ put '/web/do_register' do
 end
 
 get '/web/neighbours' do
-	@js = ['js/ocanvas-2.7.1.min.js', 'js/satellites.js', 'js/geolocation.js']
+	@js = ['js/ocanvas-2.7.1.min.js', 'js/geolocation.js']
 	
+	if params['radar'] == '1'
+		@js << 'js/radar.js'
+	else
+		@js << 'js/satellites.js'
+	end
+
 	atoken_cookie = request.cookies[settings.atoken_cookie_name]
 	# check params, do registration, obtain atoken
 	api_response = lookup_neighbours( params, atoken_cookie )
@@ -521,7 +527,9 @@ get '/web/neighbours' do
 				:latitude   => params['latitude']  || 0.0,
 				:longitude  => params['longitude'] || 0.0,
 				:neighbours => api_response['data']['neighbours'],
-				:me         => api_response['data']['me']
+				:me         => api_response['data']['me'],
+				:radar      => params['radar'] || 0
 			}
 	end
 end
+

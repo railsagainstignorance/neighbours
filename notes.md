@@ -498,3 +498,16 @@ ToDo
 
 ToDo
 - convertNeighboursToPolar should(?) to return original neighbours elements with added radius/bearing, in order to retain name, date, etc
+
+13/05/2014 21:00
+- added more radar calculation fns
+- added start of generateCanvas
+
+ToDo
+- more test with Mocha
+- in generateCanvas
+   + loop over each neighbour, 
+   + calculate hyperbolic radius
+   + display neighbour and path per neighbour (may not want to do this if too many neighbours)
+   + animate neighbour, just do an orbiting electron thingy
+   
