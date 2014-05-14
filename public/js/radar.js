@@ -164,12 +164,12 @@ var RADAR = (function () {
 			canvas,
 			centre;
 
-		c = document.querySelector("#canvas");
+		c = document.querySelector(canvas_selector);
 
 		c.width  = window.innerWidth * 0.95; //500; //window.innerWidth;
 		c.height = window.innerHeight* 0.95; //500; //window.innerHeight;
 	
-		canvas = oCanvas.create({ canvas: "#canvas", background: "#222" });
+		canvas = oCanvas.create({ canvas: canvas_selector, background: "#222" });
 
 		// Centre object. Me!
 		var centre = canvas.display.ellipse({
@@ -183,6 +183,20 @@ var RADAR = (function () {
 	}
 
 	//-------------------------------------------
+	var httpGet, getCookie;
+
+	httpGet = function(theUrl){
+	    var xmlHttp = new XMLHttpRequest();
+	    xmlHttp.open( "GET", theUrl, false );
+	    xmlHttp.send( null );
+	    return xmlHttp.responseText;
+	}
+
+	getCookie = function(name) {
+  		var value = "; " + document.cookie;
+  		var parts = value.split("; " + name + "=");
+  		if (parts.length == 2) return parts.pop().split(";").shift();
+	}
 
 	pullItAllTogether = function(){
 		var foundError = function(error){
@@ -192,9 +206,25 @@ var RADAR = (function () {
 
 		var foundPosition = function(position){
 			var coords = position.coords;
-			alert('pullItAllTogether.foundError: ' + 
-				'[lat, long]=[ ' + coords.latitude + ', ' + coords.longitude + ' ]'
+			var atoken = getCookie('ATOKEN');
+			var api_url = '/neighbours?' + 
+							'latitude=' + coords.latitude + 
+							'&longitude=' + coords.longitude + 
+							'&radius=100.0' + 
+							'&atoken=' + atoken;
+			var api_response = httpGet(api_url);
+			var api_obj = JSON.parse(api_response);
+			var neighbours = api_obj.data.neighbours;
+			var neighbours_with_polar = convertNeighboursToPolarRelativeToMe(coords, neighbours);
+
+			console.log('pullItAllTogether.foundPosition: ' + 
+				'[lat, long]=[ ' + coords.latitude + ', ' + coords.longitude + ']' + 
+				",\n api_url=" + api_url + 
+				",\n api_obj.status=" + api_obj.status + 
+				",\n num_neighbours=" + neighbours.length
 				);
+
+			generateCanvas( '#canvas', neighbours_with_polar );
 		}
 
 		var getUsersGeolocation_response = getUsersGeolocation(foundPosition, foundError);

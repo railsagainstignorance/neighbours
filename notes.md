@@ -510,4 +510,12 @@ ToDo
    + calculate hyperbolic radius
    + display neighbour and path per neighbour (may not want to do this if too many neighbours)
    + animate neighbour, just do an orbiting electron thingy
-   
+
+14/05/2014 20:27
+- get it working!!!
+   + DONE. a skelton pullItAllTogether. icky JS at the end of radar.js...
+   + append &radar=1 to replace sattelites.js with radar.js
+   + some logging in console.log
+
+ToDo
+- extend the canvas display in radar to show neighbours...
