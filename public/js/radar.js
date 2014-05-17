@@ -171,15 +171,76 @@ var RADAR = (function () {
 	
 		canvas = oCanvas.create({ canvas: canvas_selector, background: "#222" });
 
+		var my_radius = canvas.width / 40;
+		var max_radius = Math.max(c.width, c.height)/2.2;
+
 		// Centre object. Me!
 		var centre = canvas.display.ellipse({
 			     x: canvas.width / 2, 
 			     y: canvas.height / 2,
-			radius: canvas.width / 20,
+			radius: my_radius,
 			  fill: "#fff"
 		}).add();
 
-		// loop over each neighbour, calculate hyperbolic radius
+		var neighbourProto = canvas.display.ellipse({ fill: "#eee" });
+		var circumfProto   = canvas.display.ellipse({ stroke: "1px #999" });
+		// Set up data
+		var neighbours_on_canvas = [];
+		var neighbour_colour = "#107B99";
+		var path_colour      = "#666";
+
+		// Definition for a neighbour and its corresponding cicumf
+		function createNeighbour(options) {
+			// Create the isobar
+			var path = circumfProto.clone({
+				radius: options.distance,
+				strokeColor: path_colour
+			});
+			options.parent.addChild(path);
+		
+			// Create a new neighbour
+			var neighbour = neighbourProto.clone({
+				origin: {
+					x: 0,
+					y: options.distance
+				},
+				radius: options.radius,
+				x: options.x, y: options.y,
+				fill: neighbour_colour,
+				rotation: options.bearing
+			});
+			options.parent.addChild(neighbour);
+			neighbours_on_canvas.push(neighbours);
+		}
+		// loop over each neighbour, calculate asymptotic radius
+
+		neighbours_with_polar.map( function(nhbr) {
+			var naive_distance = nhbr.radiusInKm;
+			var bearing        = nhbr.bearingInDeg;
+			var min_distance   = 0.1;
+			var non_zero_distance;
+			if (naive_distance > min_distance) {
+				non_zero_distance = naive_distance;
+			} else{
+				non_zero_distance = min_distance + (Math.random() * min_distance);
+				bearing = (Math.round(Math.random()*360.0));
+			}
+
+			var asymptotic_distance = (1 - 1 / (1 + non_zero_distance)) * max_radius;
+
+			console.log("DEBUG: in neighbours_with_polar.map:" + 
+				"\nnhbr=" + JSON.stringify(nhbr) +
+				"\nasymptotic_distance=" + asymptotic_distance +
+				"\nbearing=" + bearing );
+
+			createNeighbour({
+				parent: centre, 
+				distance: asymptotic_distance,
+				bearing: bearing,
+				radius: canvas.width / 100,
+				speed: 1
+			});
+		});
 	}
 
 	//-------------------------------------------
